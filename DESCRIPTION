@@ -8,8 +8,12 @@ License: What license is it under?
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.0.1.9000
-Imports: topicmodels
-Collate: 
-    'rlda.R'
+Imports: topicmodels,
+    SnowballC
+Collate:
+    'rlda_c.R'
+    'compute_sim.R'
     'fit_rlda.R'
+    'get_topic_in_doc.R'
+    'test.R'
     'util.R'

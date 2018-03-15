@@ -7,14 +7,8 @@
 fit(r)
 }
 \arguments{
-\item{dtm}{document term matrix}
-
-\item{LDA_u}{lda object(in topicmodels)}
-
-\item{K}{numeric or vector, if numeric, number of k to try, if vector, k's to try}
-
-\item{same_k_estimation, }{integer, number of initial states to try, if 0, do not try with diff state}
+\item{r}{a rlda object}
 }
 \description{
-methods: LDA wrapper, fit
+This function fits different LDA models with different number of clusters for a rlda object
 }
