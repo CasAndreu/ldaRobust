@@ -3,10 +3,9 @@
 #install.packages("SnowballC")
 # load and install rlda
 
-# please make sure to change the following directory to be in the rlda folder on ur machine (comment out if working directory already set to correct working directory)
-setwd("./ldaRobust")
-devtools::document()
-setwd("..")
+# please make sure to change the following directory to be parent directory of the ldaRobust folder on ur machine (comment out if working directory already set to correct working directory)
+dir = "."
+setwd(dir)
 devtools::install("ldaRobust")
 
 # load data (congress dataset)
