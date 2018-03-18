@@ -15,7 +15,7 @@
 #' @slot seed_list seeds tried (exists only when same_k_estimation is true)
 #' @slot beta_list list of beta matrices in LDA objects of all K tried (ordered same as K)
 #' @slot gamma_list list of gamma matrices in LDA objects of all K tried (ordered same as K)
-#' @slot model_topic_mat T/F matrices of wheter a given topic in a model dominated a document given original similarity matrices (gamma of original lda model, then find document dominancy, then compare topic dominant document in the original model to see which topics in new model maps to old topic)
+#' @slot model_topic_mat # not used anymore, will be deleted
 #' @slot similarity_mat maximum similarity (given choice of similarity functions) of a given topic compare to any topics in the original lda model (to give the probability of a user’s topic shows up in a tried model’s resulting topics)
 #' @slot sim_matrix_list list of similarity matrices that gives us similarity between
 #' @slot init_states # not used yet, probably gonna delete

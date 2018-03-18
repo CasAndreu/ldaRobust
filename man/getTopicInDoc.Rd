@@ -10,5 +10,5 @@ getTopicInDoc(r)
 \item{r}{a rlda object}
 }
 \description{
-compute percentage of documents dominated by a given topic
+compute percentage of old documents dominated by a given old topic in the new model
 }

@@ -4,7 +4,7 @@
 # load and install rlda
 
 # please make sure to change the following directory to be parent directory of the ldaRobust folder on ur machine (comment out if working directory already set to correct working directory)
-dir = "."
+dir = ".."
 setwd(dir)
 devtools::install("ldaRobust")
 
@@ -32,8 +32,8 @@ print("rlda object created")
 
 # run lda fit, compute_sim and getTopicInDoc
 print("running fit function")
-r=rlda::fit(r)
+r=ldaRobust::fit(r)
 print("running compute sim function")
-r_sim = rlda::compute_sim(r)
+r_sim = ldaRobust::compute_sim(r)
 print("running getTopicInDoc function")
-r_top = rlda::getTopicInDoc(r)
+r_top = ldaRobust::getTopicInDoc(r)
