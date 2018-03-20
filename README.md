@@ -52,6 +52,7 @@ lda = topicmodels::LDA(dtm, 10)
 
 Run the following code to take a look at the 10 most predictive features of each topic.
 ```
+library(dplyr) # - install dplyr if you don't have it
 original_lda_predictive_features <- sapply(1:nrow(lda@beta), function(i)
   as.character((data.frame(pr = lda@beta[i,], feature = lda@terms) %>% 
   dplyr::arrange(desc(pr)) %>%
