@@ -83,23 +83,21 @@ r <- new("rlda",
 r <- rlda::fit(r)
 ```
 
-7. Compute the topic similarity between all topics in the original model (10 topics in this example) and all the topics in the other models (9 and 11 topic models in this example). As specified in step 5, we will use `cosine` similarity (`hellinger` similarity can also be used).
+7. Compute the topic similarity between all topics in the original model (10 topics in this example) and all the topics in the other models (9 and 11 topic models in this example). As specified in step 5, we will use `cosine` similarity (`hellinger` similarity can also be used). This function helps us evaluate if we would find a very similar topic if we were to slightly change the number of topics.
 ```
 r <- rlda::comput_sim(r)
 ```
-
 You can take a look at the cosine similarities by typing `r@similarity_mat_list`. The output is a list where each list element is a similarity matrix comparing the topics of the original model with the topics of a new model. In these similarity matrices, each row presents a topic from the original topic and each column a topic of a new model. You should get an outcome similar to this one. We can see for example that Topic 1 from the original 10-topic model is very similar to Topic 1 in both 9-topic and 11-topic models. 
 
-![alt text](images/similarity_matrix_list.png.png)
+![alt text](images/similarity_matrix_list.png)
 
+You can also type `r@key_features` to check the most predictive features of each topic in the alternative models.
 
+![alt text](images/most_predictive_other_models.png)
+
+8. To check whether the alternative models would generate similar results, for each alternative model you can evaluate whether the proportion of documents that have a given topic from the original model as a max class also have as max class topics from the alternative model that map to that original topic. We use the similarity `threshold` provided in step 5 to map topics form the alternative models to topics from the original model.
 
 Run `ldaRobust::fit`, `compute_sim` and `getTopicInDoc`
 ```
-
-
-print("running compute sim function")
-r = rlda::compute_sim(r)
-print("running getTopicInDoc function")
-r_top = rlda::getTopicInDoc(r)
+r <- rlda::getTopicInDoc(r)
 ```
