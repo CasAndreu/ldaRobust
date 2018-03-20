@@ -96,8 +96,6 @@ You can also type `r@key_features` to check the most predictive features of each
 ![alt text](images/most_predictive_other_models.png)
 
 8. To check whether the alternative models would generate similar results, for each alternative model you can evaluate whether the proportion of documents that have a given topic from the original model as a max class also have as max class topics from the alternative model that map to that original topic. We use the similarity `threshold` provided in step 5 to map topics form the alternative models to topics from the original model.
-
-Run `ldaRobust::fit`, `compute_sim` and `getTopicInDoc`
 ```
 r <- rlda::getTopicInDoc(r)
 ```
