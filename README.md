@@ -59,11 +59,13 @@ original_lda_predictive_features <- sapply(1:nrow(lda@beta), function(i)
   head(n = 10))$feature))
 print(original_lda_predictive_features)
 ```
+You should see the following output with the most predictive keywords of each topic.
+![alt text](images/rlda_ex_pred_features.png)
 
 5. Create `rlda` object that will contain all the information we will generate. We are specifying the following parameters:
   - `dtm` = your Document Term Document matrix.
   - `lda_u`= your original LDA model. We will asses how robust this model is to different model specifications.
-  - `threshold` = (numeric) a similarity threshold (range {0,1} where 1 indicates two topics are the same). We will use it to determine whether two topics are the same.
+  - `threshold` = (numeric) a similarity threshold (range {0,1} where 1 the maximum similarity). We will use it to determine whether two topics are the same.
   - `K` = the number of models (numeric) or a list of topic numbers (list) of other models to which you want to compare your original LDA. If you provide a numeric value, e.g. 2, we will compare your original model with 10 topics to a 9 and a 11 topic model. If you provide a list, e.g. [5,15,25], we will compare your original model with 10 topics to a 5, 15, and 25 topic model.
   
 In this example we specify `K = 2` and `threshold = 0.8`. 
@@ -85,6 +87,10 @@ r <- rlda::fit(r)
 ```
 r <- rlda::comput_sim(r)
 ```
+
+You can take a look at the cosine similarities by typing `r@similarity_mat_list`. The output is a list where each list element is a similarity matrix comparing the topics of the original model with the topics of a new model. In these similarity matrices, each row presents a topic from the original topic and each column a topic of a new model. You should get an outcome similar to this one. We can see for example that Topic 1 from the original 10-topic model is very similar to Topic 1 in both 9-topic and 11-topic models. 
+
+![alt text](images/similarity_matrix_list.png.png)
 
 
 
