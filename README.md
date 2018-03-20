@@ -7,7 +7,7 @@ This is a package to assess LDA topic instability and robustness
 Eventually the package will be on CRAN... but for now, use the following instructions to install it in your local machine.
 
 1. Download or Clone a copy of this `ldaRobust` repository-directory.
-Click on the green `Clone or download` botton on the upper right corner of the page to get the cloning link or to download a zipped version of the repository.
+Click on the green `Clone or download` button on the upper right corner of the page to get the cloning link or to download a zipped version of the repository.
 
 2. Make sure you have the following dependencies installed: `devtools` and `SnowballC`
 If you don't, you will have to install them in `R` by typing:
@@ -28,10 +28,8 @@ devtools::install("ldaRobust")
 
 1. Load data (a sample of Congressional one-minute floor speeches from the 113th Congress)
 ```
-print("loading data")
 setwd("./ldaRobust")
 data <- rjson::fromJSON(file = "data.json")
-print("data has been loaded")
 ```
 
 2. Select a random sample of only 1,000 floor speeches to speed up computation in this example
@@ -45,14 +43,20 @@ data <- data[sample(x = 1:length(data), size = 1000, replace = FALSE)]
 df<- plyr::ldply(data, data.frame)
 x = tm::SimpleCorpus(tm::VectorSource(df$speech), control=list(language ="en"))
 dtm = tm::DocumentTermMatrix(x, control=list(language="en",removePunctuation=TRUE, stopwords=TRUE, removeNumbers=TRUE,stemming=TRUE, tolower=TRUE))
-print("document term matrix created")
 ```
 
 4. Run a first original LDA model with 10 topics.
 ```
-print("running first LDA")
 lda = topicmodels::LDA(dtm, 10)
-print("LDA has been created")
+```
+
+Run the following code to take a look at the 10 most predictive features of each topic.
+```
+original_lda_predictive_features <- sapply(1:nrow(lda@beta), function(i)
+  as.character((data.frame(pr = lda@beta[i,], feature = lda@terms) %>% 
+  dplyr::arrange(desc(pr)) %>%
+  head(n = 10))$feature))
+print(original_lda_predictive_features)
 ```
 
 5. Create `rlda` object that will contain all the information we will generate. We are specifying the following parameters:
@@ -63,22 +67,32 @@ print("LDA has been created")
   
 In this example we specify `K = 2` and `threshold = 0.8`. 
 ```
-print("creating rlda object")
-r = new("rlda", 
-        dtm=dtm, 
-        lda_u=lda, 
-        threshold = 0.8, 
-        similarity_measure = "cosine", 
-        K = 2)
-print("rlda object created")
+r <- new("rlda", 
+         dtm=dtm, 
+         lda_u=lda, 
+         threshold = 0.8, 
+         similarity_measure = "cosine", 
+         K = 2)
 ```
 
-6. Run `ldaRobust::fit`, `compute_sim` and `getTopicInDoc`
+6. Fit the new LDA models. We are taking the `K` parameter specified in the previous step to see what other LDA models we want to fit to the data. In this example a 9 and a 11 topic model.
 ```
-print("running fit function")
-r=rlda::fit(r)
+r <- rlda::fit(r)
+```
+
+7. Compute the topic similarity between all topics in the original model (10 topics in this example) and all the topics in the other models (9 and 11 topic models in this example). As specified in step 5, we will use `cosine` similarity (`hellinger` similarity can also be used).
+```
+r <- rlda::comput_sim(r)
+```
+
+
+
+Run `ldaRobust::fit`, `compute_sim` and `getTopicInDoc`
+```
+
+
 print("running compute sim function")
-r_sim = rlda::compute_sim(r)
+r = rlda::compute_sim(r)
 print("running getTopicInDoc function")
 r_top = rlda::getTopicInDoc(r)
 ```
