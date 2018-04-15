@@ -78,7 +78,7 @@ setMethod("getTopicInDoc",
                 same_bool_list = sim_vals_for_maxind > thresh
                 total_doc_dom = tapply(rep(1, length(dom_top_ind_old)), dom_top_ind_old, FUN = sum)
                 dom_in_new_and_old = tapply(same_bool_list, dom_top_ind_old, FUN = sum)
-                topic_dom_perc_list[[i]] = dom_in_new_and_old/total_doc_dom
+                topic_dom_perc_list[[i]] = matrix(dom_in_new_and_old/total_doc_dom)
             }
 
             #r@model_topic_mat = topic_dom_list

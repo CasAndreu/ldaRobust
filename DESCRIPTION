@@ -11,10 +11,11 @@ LazyData: true
 RoxygenNote: 6.0.1.9000
 Imports: topicmodels,
     SnowballC
-Collate:
+Collate: 
     'rlda_c.R'
     'compute_sim.R'
     'fit_rlda.R'
     'get_topic_in_doc.R'
     'test.R'
     'util.R'
+    'visualize_res.R'
