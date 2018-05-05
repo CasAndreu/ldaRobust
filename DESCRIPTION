@@ -13,6 +13,7 @@ Imports: topicmodels,
     SnowballC
 Collate: 
     'rlda_c.R'
+    'cluster_func.R'
     'compute_sim.R'
     'fit_rlda.R'
     'get_topic_in_doc.R'

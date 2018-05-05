@@ -11,7 +11,7 @@ setMethod("getTopicInDoc",
           signature(r = "rlda"),
           function (r) {
             thresh = r@threshold
-            doc_num = r@dtm$nrow
+            doc_num = dim(r@dtm)[1]
 
             if(length(r@gamma_list) == 0)
             {
@@ -42,7 +42,11 @@ setMethod("getTopicInDoc",
             sim_list2 = list() # topic similarity list
             sim_mat_list = list() # topic similarity matrix list
             topic_mod_gamma_or = (r@lda_u)@gamma
+            # find dominant topic for each document in the original model
             dom_top_ind_old = apply(topic_mod_gamma_or, 1, function(x){order(x, decreasing = TRUE)[1]})
+            # Count number of documents dominated by each old topic
+            total_doc_dom = tapply(rep(1, doc_num), dom_top_ind_old, FUN = sum)
+            topic_dom_list[[1]]= total_doc_dom/doc_num
             for( i in 1:length(r@K) )
             {
               # similarity matrix result, each row is similarity between A_i with B
@@ -72,16 +76,20 @@ setMethod("getTopicInDoc",
 
 
                 # new_code
+                # find the dominant topic for each document in the new model and the similarity value between the new dominant topic and the old dominant topic
                 dom_top_ind_new = apply(topic_mod_gamma, 1, function(x){order(x, decreasing = TRUE)[1]})
                 sim_vals_for_maxind = sim_mat[(dom_top_ind_new-1)*nrow(sim_mat)+dom_top_ind_old]
                 # whether similarity values exceeds threshold
                 same_bool_list = sim_vals_for_maxind > thresh
-                total_doc_dom = tapply(rep(1, length(dom_top_ind_old)), dom_top_ind_old, FUN = sum)
+                # count number of documents dominated by new topic similar to a given old topic
                 dom_in_new_and_old = tapply(same_bool_list, dom_top_ind_old, FUN = sum)
+                # percentage of document dominated by new topic similar to old out of documents dominated by old topic
                 topic_dom_perc_list[[i]] = matrix(dom_in_new_and_old/total_doc_dom)
+                # percentage of documents dominated by new topic similar to old out of all documents
+                topic_dom_list[[i+1]] = matrix(dom_in_new_and_old/doc_num)
             }
 
-            #r@model_topic_mat = topic_dom_list
+            r@model_topic_mat = topic_dom_list
             r@topic_dom_perc_list = topic_dom_perc_list
             if(create_sim_list)
             {

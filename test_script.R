@@ -33,7 +33,7 @@ r = new("rlda", dtm=dtm, lda_u=lda)
 # run lda fit, compute_sim and getTopicInDoc
 #print("running fit function")
 r=ldaRobust::fit(r)
-saveRDS(r, "result.rds")
+saveRDS(r, "result.Rdata")
 #print("running compute sim function")
 r_sim = ldaRobust::compute_sim(r)
 saveRDS(r_sim, "result.rds")

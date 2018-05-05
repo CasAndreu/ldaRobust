@@ -48,7 +48,7 @@ setMethod("compute_sim",
             return(r)
 
             })
-
+# might be more convenient with proxy
 cos_sim <- function(A,B){
   # row of a matrix is a instance(i.e. topic) (with tcrosspod), otherwise use crosspod
   numerator = tcrossprod(A, B)

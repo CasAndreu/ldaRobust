@@ -2,10 +2,12 @@
 
 exportClasses(rlda)
 exportMethods("fit")
+exportMethods(cluster_topic)
 exportMethods(compute_sim)
 exportMethods(getTopicInDoc)
 exportMethods(visual_res)
 import(SnowballC)
+import(kernlab)
 import(tm)
 import(topicmodels)
 importClassesFrom(topicmodels,LDA)
