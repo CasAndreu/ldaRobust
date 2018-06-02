@@ -4,6 +4,8 @@
 #'
 #'
 #' @import topicmodels
+#' @import ggplot2
+#' @import reshape2
 #' @importClassesFrom topicmodels LDA
 #' @import tm
 #' @slot  dtm document term matrix
@@ -12,7 +14,7 @@
 #' @slot threshold, sim_threshold, threshold for return2, between [0,1]
 #' @slot same_k_estimation, integer, number of initial states to try, if 0, do not try with diff state
 #' @slot similarity_measure string, similarity measure (so far cosine or hellinger). Default: cosine
-#' @slot num_of_clusters number of clusters used when performing spectral clustering
+#' @slot num_of_clusters vector, number of clusters used when performing spectral clustering
 #' @slot seed_list seeds tried (exists only when same_k_estimation is true)
 #' @slot beta_list list of beta matrices in LDA objects of all K tried (ordered same as K)
 #' @slot gamma_list list of gamma matrices in LDA objects of all K tried (ordered same as K)
@@ -53,11 +55,11 @@ setClass("rlda",
                         similarity_mat_list = "list",
                         init_states = "numeric",
                         topic_dom_perc_list = "list",
-                        dominant_topic_cluster_list = "matrix",
+                        dominant_topic_cluster_list = "list",
                         key_features = "list",
-                        cluster_center_key_words_list = "matrix",
+                        cluster_center_key_words_list = "list",
                         perc_document_belong_cluster_list = "list",
-                        topic_cluster_assignment = "integer"
+                        topic_cluster_assignment = "list"
                         ),
          prototype(K=5,
                    threshold=0.5,
