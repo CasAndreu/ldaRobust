@@ -13,7 +13,11 @@ library(topicmodels)
 
 # PATHS & CONSTANTS
 #==============================================================================
-data_path <- paste0("~/Google Drive/andreu_tia/projects/rlda/Data/")
+# - DEVELOPMENT
+#data_path <- paste0("~/Google Drive/andreu_tia/projects/rlda/Data/")
+
+# - PRODUCTION
+data_path <- paste0("/scratch/acs706/rlda/data/")
 
 # DATA WRANGLING
 #==============================================================================
@@ -30,6 +34,13 @@ dtm_grimmer <- r@dtm
 # MAIN -- ESTIMATE 2 MORE LDAs: 5 and 100 topic models
 #==============================================================================
 grimmer_5topic_model <- topicmodels::LDA(dtm_grimmer, k = 5)
+save(grimmer_5topic_model,
+     paste0(data_path,
+            "03-paper-data/Grimmer_lda/grimmer_5topic_model.RData"))
 
+grimmer_100topic_model <- topicmodels::LDA(dtm_grimmer, k = 100)
+save(grimmer_100topic_model,
+     paste0(data_path,
+            "03-paper-data/Grimmer_lda/grimmer_100topic_model.RData"))
 
 
