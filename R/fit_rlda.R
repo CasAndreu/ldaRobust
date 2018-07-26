@@ -15,7 +15,7 @@ setMethod("fit",
           {
             # get all variables from rlda object
             lda_list = NULL
-            k_list = NULL
+            k_list = r@K
             seed_list=NULL
             beta_list = list()
             gamma_list = list()
