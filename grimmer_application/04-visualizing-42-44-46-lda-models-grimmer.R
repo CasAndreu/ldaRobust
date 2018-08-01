@@ -11,6 +11,7 @@
 library(dplyr)
 library(ldaRobust)
 library(reshape2)
+library(extrafont) # font_import(pattern = "lmroman*")
 library(ggplot2)
 
 # PATHS & CONSTANTS
@@ -72,32 +73,51 @@ rownames(similarity_list_mat) = as.character(1:nrow(similarity_list_mat))
 # - similarity matrix in long format so it can be plotted as a tile plot type
 sim_melt = melt(similarity_list_mat)
 
-pdf(paste0(data_path, "03-paper-data/Grimmer_lda/figures/",
-#           "topic_sim_matrix_alternative_01.pdf"),
-           "topic_sim_matrix_alternative_01_NO_SIM_NUM.pdf"),
-    width = 20, height = 12)
-ggplot(sim_melt,
-       aes(x = factor(Var2), y = factor(Var1), fill = value, label = round(value, 2))) +
+# - create a simplified version of the similarity variable (categorical)
+sim_melt <- sim_melt %>%
+  mutate(sim_cat = cut(value,
+                       breaks = c(-Inf, 0.7, .8, .9, .95, Inf),
+                       labels = c("Very Low", "Low", "Medium",
+                                  "High", "Very High")))
+
+p <- ggplot(sim_melt,
+       aes(x = factor(Var2), y = factor(Var1), fill = sim_cat, label = round(value, 2))) +
   #geom_tile(color='white', alpha = 0.5) +
-  geom_tile(color='white', alpha = 0.7) +
+  geom_tile(color='white', alpha = 0.9) +
   #geom_text(color='black', size = 4.5) +
-  scale_fill_continuous(low="#56B1F7", high="#132B43") +
+  scale_fill_manual(values = c("white", "gray90", "gray70", "gray50", "gray30")) +
   #scale_colour_gradient2(high = "#132B43",
   #                       low = "#56B1F7", midpoint = .95) +
-  xlab("Topics from Alternative 01 (B)\n") +
-  ylab("\nTopics from Original Model\n") +
+  #xlab("Topics from Alternative 01 (B)\n") +
+  #ylab("\nTopics from Original Model\n") +
   coord_flip()+
   # - highlight the column for Topic 16 original model
-  geom_hline(yintercept = 15.5, color = "red", size = 1.5, alpha = 0.7) +
-  geom_hline(yintercept = 16.5, color = "red", size = 1.5, alpha = 0.7) +
+  geom_hline(yintercept = 15.5, color = "red", size = 1.1, alpha = 0.7) +
+  geom_hline(yintercept = 16.5, color = "red", size = 1.1, alpha = 0.7) +
+  geom_segment(x = 0.5, xend = 0.5, y = 15.5, yend = 16.5, color = "red",
+               alpha = 0.7, size = 1) +
+  geom_segment(x = 42.5, xend = 42.5, y = 15.5, yend = 16.5, color = "red",
+               alpha = 0.7, size = 1) +
   # - highlight the row for Topic 19 alternative model
-  geom_vline(xintercept = 18.5, color = "red", size = 1.5, alpha = 0.7) +
-  geom_vline(xintercept = 19.5, color = "red", size = 1.5, alpha = 0.7) +
+  geom_vline(xintercept = 17.5, color = "red", size = 1.1, alpha = 0.7) +
+  geom_vline(xintercept = 18.5, color = "red", size = 1.1, alpha = 0.7) +
+  geom_segment(y = 0.45, yend = 0.45, x = 17.5, xend = 18.5, color = "red",
+               alpha = 0.7, size = 1) +
+  geom_segment(y = 44.55, yend = 44.55, x = 17.5, xend = 18.5, color = "red",
+               alpha = 0.7, size = 1) +
+  scale_x_discrete("Topics from Alternative 01 (B)\n", expand = c(0,0)) +
+  scale_y_discrete("\nTopics from Original Model\n", expand = c(0,0)) +
   theme(panel.background = element_rect("white"),
         legend.position="none",
         axis.text = element_text(size = 18),
-        axis.title = element_text(size = 22))
-dev.off()
+        axis.title = element_text(size = 22),
+        text = element_text(family = "LM Roman 10"),
+        panel.border = element_rect(colour = "black", fill = NA))
+
+ggsave(p, filename = paste0(data_path, "03-paper-data/Grimmer_lda/figures/",
+                             #           "topic_sim_matrix_alternative_01.pdf"),
+                             "topic_sim_matrix_alternative_01_NO_SIM_NUM-02.pdf"),
+       width = 20, height = 12, units = "in", device = cairo_pdf)
 
 # A2)
 # - Similarity plot "Original Model (44 topics) V. Alternative A (42 topics)"
@@ -111,30 +131,47 @@ rownames(similarity_list_mat) = as.character(1:nrow(similarity_list_mat))
 # - similarity matrix in long format so it can be plotted as a tile plot type
 sim_melt = melt(similarity_list_mat)
 
-pdf(paste0(data_path, "03-paper-data/Grimmer_lda/figures/",
-           #           "topic_sim_matrix_alternative_01.pdf"),
-           "topic_sim_matrix_alternative_02_NO_SIM_NUM.pdf"),
-    width = 20, height = 14)
-ggplot(sim_melt,
-       aes(x = factor(Var2), y = factor(Var1), fill = value, label = round(value, 2))) +
+# - create a simplified version of the similarity variable (categorical)
+sim_melt <- sim_melt %>%
+  mutate(sim_cat = cut(value,
+                       breaks = c(-Inf, 0.7, .8, .9, .95, Inf),
+                       labels = c("Very Low", "Low", "Medium",
+                                  "High", "Very High")))
+
+p2 <- ggplot(sim_melt,
+       aes(x = factor(Var2), y = factor(Var1), fill = sim_cat, label = round(value, 2))) +
   #geom_tile(color='white', alpha = 0.5) +
-  geom_tile(color='white', alpha = 0.7) +
+  geom_tile(color='white', alpha = 0.9) +
   #geom_text(color='black', size = 4.5) +
-  scale_fill_continuous(low="#56B1F7", high="#132B43") +
+  scale_fill_manual(values = c("white", "gray90", "gray70", "gray50", "gray30")) +
   #scale_colour_gradient2(high = "#132B43",
   #                       low = "#56B1F7", midpoint = .95) +
   xlab("Topics from Alternative 02 (C)\n") +
   ylab("\nTopics from Original Model\n") +
   coord_flip()+
   # - highlight the rowS for Topic 3 and 6 alternative model
-  geom_vline(xintercept = 2.5, color = "red", size = 1.5, alpha = 0.7) +
-  geom_vline(xintercept = 3.5, color = "red", size = 1.5, alpha = 0.7) +
-  geom_vline(xintercept = 5.5, color = "red", size = 1.5, alpha = 0.7) +
-  geom_vline(xintercept = 6.5, color = "red", size = 1.5, alpha = 0.7) +
+  geom_vline(xintercept = 2.5, color = "red", size = 1.1, alpha = 0.7) +
+  geom_vline(xintercept = 3.5, color = "red", size = 1.1, alpha = 0.7) +
+  #geom_vline(xintercept = 5.5, color = "red", size = 1.1, alpha = 0.7) +
+  #geom_vline(xintercept = 6.5, color = "red", size = 1.1, alpha = 0.7) +
+  geom_segment(y = 0.45, yend = 0.45, x = 2.5, xend = 3.5, color = "red",
+               alpha = 0.7, size = 1) +
+  geom_segment(y = 44.55, yend = 44.55, x = 2.5, xend = 3.5, color = "red",
+               alpha = 0.7, size = 1) +
+  # geom_segment(y = 0.45, yend = 0.45, x = 5.5, xend = 6.5, color = "red",
+  #              alpha = 0.7, size = 1) +
+  # geom_segment(y = 44.55, yend = 44.55, x = 5.5, xend = 6.5, color = "red",
+  #              alpha = 0.7, size = 1) +
   theme(panel.background = element_rect("white"),
         legend.position="none",
         axis.text = element_text(size = 18),
-        axis.title = element_text(size = 22))
-dev.off()
+        axis.title = element_text(size = 22),
+        text = element_text(family = "LM Roman 10"),
+        panel.border = element_rect(colour = "black", fill = NA))
 
+
+ggsave(p2, filename = paste0(data_path, "03-paper-data/Grimmer_lda/figures/",
+                            #           "topic_sim_matrix_alternative_01.pdf"),
+                            "topic_sim_matrix_alternative_02_NO_SIM_NUM-02.pdf"),
+       width = 20, height = 12, units = "in", device = cairo_pdf)
 
