@@ -99,8 +99,12 @@ You can also type `r@key_features` to check the most predictive features of each
 
 ![alt text](images/most_predictive_other_models.png)
 
-8. To check whether the alternative models would generate similar results, for each alternative model you can evaluate whether the proportion of documents that have a given topic from the original model as a max class also have as max class topics from the alternative model that map to that original topic. Also, you can evluate the proportion of all documents that are dominated by a topic maps to a given topic in the original model. We use the similarity `threshold` provided in step 5 to map topics form the alternative models to topics from the original model.
+8. To check whether the alternative models would generate similar results, for each alternative model you can evaluate whether the proportion of documents that have a given topic from the original model as a max class also have as max class topics from the alternative model that map to that original topic. Also, you can evluate the proportion of documents that are dominated by a topic maps to a given topic in the original model. We use the similarity `threshold` provided in step 5 to map topics form the alternative models to topics from the original model.
 ```
 r <- rlda::getTopicInDoc(r)
 ```
-To evaluate the first proportion, type `r@topic_dom_perc_list`. This will return a list where each list element is a matrix of proportion of documents mapped to the same topic in the original and comparison models. 
+To evaluate the first proportion, type `r@topic_dom_perc_list`. This will return a list where each list element is a vector of proportion of documents mapped to the same topic in the original and comparison models. The ith value in the jth vector is the proportion of documents mapped to the same ith topic in the original and comparison model j. 
+
+To evaluate the second proportion, type `r@model_topic_mat`, This will return a list where each list element is a vector of proportions of documents that are dominated by a topic map to a given topic in the original model. The ith value in the jth vector is the proportion of documents mapped to the ith original model topic in the jth comparison model.
+
+9. Cluster topics across models to overarching topic groups. The following function perform spectral clustering on the topics across the original model and the comparison models using number of centers provided in the num_of_clusters option in the rlda object. It will return a list of the cluster assignment of each topic in each model, a list of top 10 keywords in each cluster,  for each number of clusters. 
