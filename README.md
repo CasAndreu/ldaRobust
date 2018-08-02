@@ -67,6 +67,8 @@ You should see the following output with the most predictive keywords of each to
   - `lda_u`= your original LDA model. We will asses how robust this model is to different model specifications.
   - `threshold` = (numeric) a similarity threshold (range {0,1} where 1 the maximum similarity). We will use it to determine whether two topics are the same.
   - `K` = the number of models (numeric) or a list of topic numbers (list) of other models to which you want to compare your original LDA. If you provide a numeric value, e.g. 2, we will compare your original model with 10 topics to a 9 and a 11 topic model. If you provide a list, e.g. [5,15,25], we will compare your original model with 10 topics to a 5, 15, and 25 topic model.
+  - `compute_parallel` = a bool value to indicate whether you want the models to be trained in fit function to be trained in parallel. 
+  - `num_of_clusters` = the number of clusters (numeric) or a list of cluster numbers (list) to which you want to compare your original LDA. If the original model has topic number 10 and you provide a numeric value, e.g. 2, we will cluster topics in all models into 9, 10 and 11 clusters. If you provide a list, e.g. [5,15,25], we will cluster all topics into 5, 15, 25 clusters.
   
 In this example we specify `K = 2` and `threshold = 0.8`. 
 ```
@@ -75,7 +77,9 @@ r <- new("rlda",
          lda_u=lda, 
          threshold = 0.8, 
          similarity_measure = "cosine", 
-         K = 2)
+         K = 2,
+         compute_parallel = True,
+         num_of_clusters = 3)
 ```
 
 6. Fit the new LDA models. We are taking the `K` parameter specified in the previous step to see what other LDA models we want to fit to the data. In this example a 9 and a 11 topic model.
