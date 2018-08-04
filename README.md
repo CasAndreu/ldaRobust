@@ -70,7 +70,7 @@ You should see the following output with the most predictive keywords of each to
   - `compute_parallel` = a bool value to indicate whether you want the models to be trained in fit function to be trained in parallel. 
   - `num_of_clusters` = the number of clusters (numeric) or a list of cluster numbers (list) to which you want to compare your original LDA. If the original model has topic number 10 and you provide a numeric value, e.g. 2, we will cluster topics in all models into 9, 10 and 11 clusters. If you provide a list, e.g. [5,15,25], we will cluster all topics into 5, 15, 25 clusters.
   
-In this example we specify `K = 2` and `threshold = 0.8`. 
+In this example we specify `K = 2` and `threshold = 0.8`. (Please make sure that the ldaRobust library is appended; otherwise, cannot create new objects.) 
 ```
 r <- new("rlda", 
          dtm=dtm, 
@@ -84,12 +84,12 @@ r <- new("rlda",
 
 6. Fit the new LDA models. We are taking the `K` parameter specified in the previous step to see what other LDA models we want to fit to the data. In this example a 9 and a 11 topic model.
 ```
-r <- rlda::fit(r)
+r <- ldaRobust::fit(r)
 ```
 
 7. Compute the topic similarity between all topics in the original model (10 topics in this example) and all the topics in the other models (9 and 11 topic models in this example). As specified in step 5, we will use `cosine` similarity (`hellinger` similarity can also be used). This function helps us evaluate if we would find a very similar topic if we were to slightly change the number of topics.
 ```
-r <- rlda::comput_sim(r)
+r <- ldaRobust::comput_sim(r)
 ```
 You can take a look at the cosine similarities by typing `r@similarity_mat_list`. The output is a list where each list element is a similarity matrix comparing the topics of the original model with the topics of a new model. In these similarity matrices, each row presents a topic from the original topic and each column a topic of a new model. You should get an outcome similar to this one. We can see for example that Topic 1 from the original 10-topic model is very similar to Topic 1 in both 9-topic and 11-topic models. 
 
@@ -101,10 +101,21 @@ You can also type `r@key_features` to check the most predictive features of each
 
 8. To check whether the alternative models would generate similar results, for each alternative model you can evaluate whether the proportion of documents that have a given topic from the original model as a max class also have as max class topics from the alternative model that map to that original topic. Also, you can evluate the proportion of documents that are dominated by a topic maps to a given topic in the original model. We use the similarity `threshold` provided in step 5 to map topics form the alternative models to topics from the original model.
 ```
-r <- rlda::getTopicInDoc(r)
+r <- ldaRobust::getTopicInDoc(r)
 ```
 To evaluate the first proportion, type `r@topic_dom_perc_list`. This will return a list where each list element is a vector of proportion of documents mapped to the same topic in the original and comparison models. The ith value in the jth vector is the proportion of documents mapped to the same ith topic in the original and comparison model j. 
 
 To evaluate the second proportion, type `r@model_topic_mat`, This will return a list where each list element is a vector of proportions of documents that are dominated by a topic map to a given topic in the original model. The ith value in the jth vector is the proportion of documents mapped to the ith original model topic in the jth comparison model.
 
-9. Cluster topics across models into overarching topic groups. The following function perform spectral clustering on the topics across the original model and the comparison models using number of centers provided in the num_of_clusters option in the rlda object. It will return a list of vectors that contain the cluster assignment of each topic in each model, a list of matrix contains top 10 keywords in each cluster, a list of vector contains percentage of documents belong to a given cluster in a given model (it count as belong to if the dominate topic of the document belongs to the cluster)  for each number of clusters.
+9. Cluster topics across models into overarching topic groups. The following function perform spectral clustering on the topics across the original model and the comparison models using number of centers provided in the num_of_clusters option in the rlda object. It will return a list of vectors that contain the cluster assignment of each topic in each model, a list of matrix contains top 10 keywords in each cluster, a list of vector contains the cluster assignment of each document(based on the cluster assignment of the dominant topic of that document), a list of vector contains percentage of documents belong to a given cluster in a given model for each number of clusters.
+
+```
+r <- ldaRobust::cluster_topic(r)
+```
+
+The cluster assignment of each topic can be found by typing ```r@topic_cluster_assignment```. It will return a list where each list element is a vector that contains cluster assignment of each topic with the order of [topics in the original model, topic in the comparison models base on K] for each cluster number. 
+
+The keywords for each cluster can be found by typing ```r@cluster_center_key_words_list```. It will return a list where each list element is a matrix that each column contains top 10 keywords of the center of the corresponding cluster for each cluster number. 
+
+```r@'''
+
