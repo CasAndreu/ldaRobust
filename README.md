@@ -99,7 +99,7 @@ You can also type `r@key_features` to check the most predictive features of each
 
 ![alt text](images/key_features.png)
 
-8. To check whether the alternative models would generate similar results, for each alternative model you can evaluate whether the proportion of documents that have a given topic from the original model as a max class also have as max class topics from the alternative model that map to that original topic. Also, you can evluate the proportion of documents that are dominated by a topic maps to a given topic in the original model. We use the similarity `threshold` provided in step 5 to map topics form the alternative models to topics from the original model.
+8. To check whether the alternative models would generate similar results, for each alternative model you can evaluate whether the proportion of documents that have a given topic from the original model dominant topic also have a dominant topic from the alternative model that maps to that original topic. Also, you can evluate the proportion of documents that are dominated by a topic maps to a given topic in the original model. We use the similarity `threshold` provided in step 5 to map topics form the alternative models to topics from the original model.
 ```
 r <- ldaRobust::getTopicInDoc(r)
 ```
@@ -130,18 +130,18 @@ The keywords for each cluster can be found by typing ```r@cluster_center_key_wor
 
 ![alt text](images/cluster_center_keywords_list.png)
 
-```r@dominant_topic_cluster_list``` gives a list where each list element is a matrix that contains the cluster assignment of each document for all models for each cluster number. The i,jth term in a matrix in the list gives the cluster assignment for document j in the ith model, where the models are ordered as [the original model, the comparison models ordered same as in r@K after fit].
+```r@dominant_topic_cluster_list``` gives a list where each list element is a matrix that contains the cluster assignment of each document for all models for each cluster number. The ijth term in a matrix in the list gives the cluster assignment for document j in the ith model, where the models are ordered as [the original model, the comparison models ordered same as in r@K after fit].
 
 ![alt text](images/cluster1.png)
 ![alt text](images/cluster2.png)
 
 
-```r@perc_document_belong_cluster_list``` gives a list where each list element is a list of vectors that contains percentage of documents belong to a cluster in each model for each cluster number. The ith vector in jth list contains percentage of documents belongs to each cluster in the ith model when used cluster number j in ```r@num_of_clusters```. Models are ordered as [the original model, the comparison models ordered same as in r@K after fit].
+```r@perc_document_belong_cluster_list``` gives a list where each list element is a list of vectors that contains percentage of documents belong to a cluster in each model for each cluster number. The ith vector in jth list contains percentage of documents belongs to each cluster in the ith model when used jth cluster number in ```r@num_of_clusters```. Models are ordered as [the original model, the comparison models ordered same as in r@K after fit].
 
 ![alt text](images/perc_doc_belong_to_cluster.png)
 
 
-10. To obtain visualizations of results obtained using the ```ldaRobust::compute_sim``` and  ```ldaRobust::getTopicInDoc```, use the following function.
+10. To obtain visualizations of results from  ```ldaRobust::compute_sim``` and  ```ldaRobust::getTopicInDoc```, use the following function.
 
 ```
 ldaRobust::plot_visual(r, dir)
