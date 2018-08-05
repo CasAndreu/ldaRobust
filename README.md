@@ -120,7 +120,7 @@ r <- ldaRobust::cluster_topic(r)
 
 To examine what are the cluster number used for clustering, type ```r@num_of_clusters```.
 
-![alt text](images/num_of_cluster.png)
+<img src = "https://github.com/CasAndreu/ldaRobust/blob/tianyibi-readme_1/images/num_of_cluster.png" width="25%" height="25%">
 
 The cluster assignment of each topic can be found by typing ```r@topic_cluster_assignment```. It will return a list where each list element is a vector that contains cluster assignment of each topic with the order of [topics in the original model, topic in the comparison models ordered same as in r@K after fit] for each cluster number. 
 
