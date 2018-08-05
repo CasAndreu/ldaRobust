@@ -105,7 +105,7 @@ r <- ldaRobust::getTopicInDoc(r)
 ```
 To evaluate the first proportion, type `r@topic_dom_perc_list`. This will return a list where each list element is a vector of proportion of documents mapped to the same topic in the original and comparison models. The ith value in the jth vector is the proportion of documents mapped to the same ith topic in the original and comparison model j. 
 
-![alt text](images/topic_dom_perc_list.png =20x20)
+![alt text](images/topic_dom_perc_list.png, width="20", height="20")
 
 To evaluate the second proportion, type `r@model_topic_mat`, This will return a list where each list element is a vector of proportions of documents that are dominated by a topic map to a given topic in the original model. The ith value in the jth vector is the proportion of documents mapped to the ith original model topic in the jth comparison model.
 
