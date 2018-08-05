@@ -89,7 +89,7 @@ r <- ldaRobust::fit(r)
 
 7. Compute the topic similarity between all topics in the original model (10 topics in this example) and all the topics in the other models (9 and 11 topic models in this example). As specified in step 5, we will use `cosine` similarity (`hellinger` similarity can also be used). This function helps us evaluate if we would find a very similar topic if we were to slightly change the number of topics.
 ```
-r <- ldaRobust::comput_sim(r)
+r <- ldaRobust::compute_sim(r)
 ```
 You can take a look at the cosine similarities by typing `r@similarity_mat_list`. The output is a list where each list element is a similarity matrix comparing the topics of the original model with the topics of a new model. In these similarity matrices, each row presents a topic from the original topic and each column a topic of a new model. You should get an outcome similar to this one. We can see for example that Topic 1 from the original 10-topic model is very similar to Topic 1 in both 9-topic and 11-topic models. 
 
@@ -122,7 +122,7 @@ The keywords for each cluster can be found by typing ```r@cluster_center_key_wor
 ```r@perc_document_belong_cluster_list``` gives a list where each list element is a list of vectors that contains percentage of documents belong to a cluster in each model for each cluster number. The ith vector in jth list contains percentage of documents belongs to each cluster in the ith model when used cluster number j in ```r@num_of_clusters```. Models are ordered as [the original model, the comparison models ordered same as in r@K after fit].
 
 
-10. To obtain visualizations of results obtained using the ```ldaRobust::comput_sim``` and  ```ldaRobust::getTopicInDoc```, use the following function.
+10. To obtain visualizations of results obtained using the ```ldaRobust::compute_sim``` and  ```ldaRobust::getTopicInDoc```, use the following function.
 
 ```
 ldaRobust::plot_visual(r, dir)
