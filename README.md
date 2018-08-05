@@ -78,7 +78,7 @@ r <- new("rlda",
          threshold = 0.8, 
          similarity_measure = "cosine", 
          K = 2,
-         compute_parallel = True,
+         compute_parallel = TRUE,
          num_of_clusters = 3)
 ```
 
