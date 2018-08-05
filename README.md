@@ -107,15 +107,26 @@ To evaluate the first proportion, type `r@topic_dom_perc_list`. This will return
 
 To evaluate the second proportion, type `r@model_topic_mat`, This will return a list where each list element is a vector of proportions of documents that are dominated by a topic map to a given topic in the original model. The ith value in the jth vector is the proportion of documents mapped to the ith original model topic in the jth comparison model.
 
-9. Cluster topics across models into overarching topic groups. The following function perform spectral clustering on the topics across the original model and the comparison models using number of centers provided in the num_of_clusters option in the rlda object. It will return a list of vectors that contain the cluster assignment of each topic in each model, a list of matrix contains top 10 keywords in each cluster, a list of vector contains the cluster assignment of each document(based on the cluster assignment of the dominant topic of that document), a list of vector contains percentage of documents belong to a given cluster in a given model for each number of clusters.
+9. Cluster topics across models into overarching topic groups. The following function perform spectral clustering on the topics across the original model and the comparison models using number of centers provided in the num_of_clusters option in the rlda object. It will return a list of vectors that contain the cluster assignment of each topic in each model, a list of matrix contains top 10 keywords in each cluster, a list of matrix contains the cluster assignment of each document(based on the cluster assignment of the dominant topic of that document) in each model, a list of list contains percentage of documents belong to a given cluster in a given model for each number of clusters.
 
 ```
 r <- ldaRobust::cluster_topic(r)
 ```
 
-The cluster assignment of each topic can be found by typing ```r@topic_cluster_assignment```. It will return a list where each list element is a vector that contains cluster assignment of each topic with the order of [topics in the original model, topic in the comparison models base on K] for each cluster number. 
+The cluster assignment of each topic can be found by typing ```r@topic_cluster_assignment```. It will return a list where each list element is a vector that contains cluster assignment of each topic with the order of [topics in the original model, topic in the comparison models ordered same as in r@K after fit] for each cluster number. 
 
 The keywords for each cluster can be found by typing ```r@cluster_center_key_words_list```. It will return a list where each list element is a matrix that each column contains top 10 keywords of the center of the corresponding cluster for each cluster number. 
 
-```r@'''
+```r@dominant_topic_cluster_list``` gives a list where each list element is a matrix that contains the cluster assignment of each document for all models for each cluster number. The i,jth term in a matrix in the list gives the cluster assignment for document j in the ith model, where the models are ordered as [the original model, the comparison models ordered same as in r@K after fit].
+
+```r@perc_document_belong_cluster_list``` gives a list where each list element is a list of vectors that contains percentage of documents belong to a cluster in each model for each cluster number. The ith vector in jth list contains percentage of documents belongs to each cluster in the ith model when used cluster number j in ```r@num_of_clusters```. Models are ordered as [the original model, the comparison models ordered same as in r@K after fit].
+
+
+10. To obtain visualizations of results obtained using the ```ldaRobust::comput_sim``` and  ```ldaRobust::getTopicInDoc```, use the following function.
+
+```
+ldaRobust::plot_visual(r, dir)
+```
+
+```dir``` is a string that contains the path where you want the generated plots to be saved in. It should not end with "/" in the end. e.g. ```dir <- "~/Desktop"```. The generated the similarity matrix plots for each model will be saved in ```dir/sim```, and the plot for two matrices in ```ldaRobust::getTopicInDoc``` will be saved in ```dir/topDoc```. 
 
