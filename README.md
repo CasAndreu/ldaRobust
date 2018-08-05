@@ -105,11 +105,11 @@ r <- ldaRobust::getTopicInDoc(r)
 ```
 To evaluate the first proportion, type `r@topic_dom_perc_list`. This will return a list where each list element is a vector of proportion of documents mapped to the same topic in the original and comparison models. The ith value in the jth vector is the proportion of documents mapped to the same ith topic in the original and comparison model j. 
 
-![](images/topic_dom_perc_list.png){:height="50%" width="50%"}
+![](images/topic_dom_perc_list.png)
 
 To evaluate the second proportion, type `r@model_topic_mat`, This will return a list where each list element is a vector of proportions of documents that are dominated by a topic map to a given topic in the original model. The ith value in the jth vector is the proportion of documents mapped to the ith original model topic in the jth comparison model.
 
-![alt text](images/model_topic_mat.png)
+<img src = "https://github.com/CasAndreu/ldaRobust/blob/tianyibi-readme_1/images/model_topic_mat.png" width="50" height="50">
 
 
 9. Cluster topics across models into overarching topic groups. The following function perform spectral clustering on the topics across the original model and the comparison models using number of centers provided in the num_of_clusters option in the rlda object. It will return a list of vectors that contain the cluster assignment of each topic in each model, a list of matrix contains top 10 keywords in each cluster, a list of matrix contains the cluster assignment of each document(based on the cluster assignment of the dominant topic of that document) in each model, a list of list contains percentage of documents belong to a given cluster in a given model for each number of clusters.
