@@ -124,7 +124,7 @@ To examine what are the cluster number used for clustering, type ```r@num_of_clu
 
 The cluster assignment of each topic can be found by typing ```r@topic_cluster_assignment```. It will return a list where each list element is a vector that contains cluster assignment of each topic with the order of [topics in the original model, topic in the comparison models ordered same as in r@K after fit] for each cluster number. 
 
-![alt text](images/topioc_cluster_assignment.png)
+![alt text](images/topic_cluster_assignment.png)
 
 The keywords for each cluster can be found by typing ```r@cluster_center_key_words_list```. It will return a list where each list element is a matrix that each column contains top 10 keywords of the center of the corresponding cluster for each cluster number. 
 
@@ -151,15 +151,15 @@ ldaRobust::plot_visual(r, dir)
 
 The following plots are the generated plot for similarity matrix for each comparison model
 
-![alt text](images/sim1.png)
-![alt text](images/sim2.png)
+![alt text](images/sim1.jpg)
+![alt text](images/sim2.jpg)
 
 The following plot is the generated plot for ```r@model_topic_mat```
 
-![alt text](images/mod_top.png)
+![alt text](images/mod_top.jpg)
 
 The following plot is the generated plot for ```r@topic_dom_perc_list```
 
-![alt text](images/top_mod_perc.png)
+![alt text](images/top_mod_perc.jpg)
 
 
