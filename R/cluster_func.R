@@ -58,6 +58,7 @@ setMethod("cluster_topic",
             for(i in 1:length(clus_list)){
               cl_obj = kernlab::specc(beta_mat, clus_list[i])
               dominant_topic_cluster_list = cl_obj@.Data[apply(gamma_original, 1, function(x){order(x, decreasing = TRUE)[1]})]
+              dominant_topic_cluster_list = as.vector(dominant_topic_cluster_list)
               # might be better with dplyr
               cluster_value = rep(1, doc_num)
               perc_document_tab = tapply(rep(1, doc_num), dominant_topic_cluster_list, FUN=sum)/doc_num
@@ -76,7 +77,7 @@ setMethod("cluster_topic",
                     topic_num = num_topics_list[j]
                     cluster_value = rep(1, doc_num)
                     new_dom_top_cluster = cl_obj@.Data[apply(gamma_list[[j]], 1, function(x){order(x, decreasing = TRUE)[1]})+starting_idx]
-                    dominant_topic_cluster_list = rbind(dominant_topic_cluster_list, new_dom_top_cluster)
+                    dominant_topic_cluster_list = as.vector(rbind(as.vector(dominant_topic_cluster_list), as.vector(new_dom_top_cluster)))
 
                     perc_document_tab = tapply(rep(1, doc_num), new_dom_top_cluster, FUN=sum)/doc_num
                     perc_document_belong_cluster = rep(0, clus_list[i])
