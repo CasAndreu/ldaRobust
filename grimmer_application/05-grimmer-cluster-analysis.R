@@ -8,15 +8,17 @@
 #===============================================================================
 library(dplyr)
 library(tidyr)
-library(extrafont) # font_import(pattern = "lmroman*")
+library(extrafont) # font_import(pattern = "lmroman*") # loadfonts()
 library(ldaRobust)
 library(reshape2)
 library(ggplot2)
 library(MASS)
+library(lme4)
 
 # PATHS & CONSTANTS
 #===============================================================================
-data_path <- paste0("~/Google Drive/andreu_tia/projects/rlda/Data/")
+#data_path <- paste0("~/Google Drive/andreu_tia/projects/rlda/Data/")
+data_path <- paste0("~/Desktop/Google Drive/andreu_tia/projects/rlda/Data/")
 
 # DATA
 #===============================================================================
@@ -24,14 +26,37 @@ data_path <- paste0("~/Google Drive/andreu_tia/projects/rlda/Data/")
 #   data (object name: "r")
 print(load(paste0(
   data_path,
-  "03-paper-data/Grimmer_lda/results.RData"
+  #"03-paper-data/Grimmer_lda/results.RData"
+  "03-paper-data/Grimmer_lda_41-47/grimmer_clus.RData"
 )))
+r <- r_clus
 
 # - load a dataset with doc-level covariates
 doc_covs <- read.csv(paste0(
   data_path,
   "01-replication-data/02-Grimmer-2012/PressData.csv"
 ))
+
+# - author-year level covariates
+print(load(paste0(
+  data_path,
+  "01-replication-data/02-Grimmer-2012/variables.RData"
+)))
+
+# - import a dataset with TOPIC/CLUSTER-level covariates: whether a cluster is
+#   about Credit-Claiming / Position-Taking / Other. Also, whether it matches
+#   a topic in Grimmer's Table 1, and the topic label for the match.
+cluster_covs <- read.csv(paste0(
+  #data_path, "03-paper-data/Grimmer_lda/grimmer_lda_cluster_info_LABELED.csv"
+  data_path, "03-paper-data/Grimmer_lda/grimmer_lda_cluster_info_41_47_LABELED.csv"
+))
+
+# - loading aggregated measures of credit claiming and position taking from
+#   Grimmer's replication data
+print(load(paste0(
+  data_path,
+  "01-replication-data/02-Grimmer-2012/DepVars.RData"
+)))
 
 
 # DATA WRANGLING
@@ -53,16 +78,19 @@ clustering_i <- which(r@num_of_clusters == 44)
 clustering <-r@perc_document_belong_cluster_list[clustering_i]
 
 # - transforming this information from nested list to data frame format
-model_cluster_df <- as.data.frame(matrix(nrow = 11, ncol = 44))
+#model_cluster_df <- as.data.frame(matrix(nrow = 11, ncol = 44))
+model_cluster_df <- as.data.frame(matrix(nrow = 7, ncol = 44))
 colnames(model_cluster_df) <- paste0("cluster_", sprintf("%02d", 1:44))
 rownames(model_cluster_df) <- paste0("model_", sprintf("%02d", c(44,
-                                                                 39:43,
-                                                                 45:49)))
+                                                                 #39:43,
+                                                                 41:43,
+                                                                 #45:49,
+                                                                 45:47)))
 for (i in 1:length(clustering[[1]])) {
   model_cluster_df[i,] <- round(clustering[[1]][[i]], 4)
 }
 
-# - preparing two dataset to visualize to visualize the data
+# - preparing two dataset to visualize the data
 plot_db_01_01 <- model_cluster_df %>%
   mutate(model = rownames(.)) %>%
   gather(cluster, value, - model)
@@ -86,6 +114,15 @@ for (j in 1:ncol(features_nested_list[[1]])) {
 
 plot_db_01_02$top_features <- features_list_str
 
+# - write out a copy of this dataset showing only the cluster number and the
+#   most predictive features of each cluster
+# write.csv(plot_db_01_02 %>% dplyr::select(cluster, top_features),
+#           paste0(data_path,
+#                  "03-paper-data/Grimmer_lda_41-47/grimmer_lda_cluster_info.csv"),
+#           row.names = FALSE) # - Manually labeling the cluster for whether
+#                                  they're about Credit Claiming / Position Taking
+#                                  or something else.
+
 # - a plot showing the proportion that get classified into the same cluster by
 #   model
 p <- ggplot(plot_db_01_02 %>%
@@ -105,7 +142,10 @@ p <- ggplot(plot_db_01_02 %>%
                      limits = c(1, length(plot_db_01_02$cluster)),
                      breaks = seq(1, length(plot_db_01_02$cluster), 1),
                      labels = paste0("Cluster ",
-                                     seq(1, length(plot_db_01_02$cluster), 1)),
+                                     sprintf("%02d",
+                                             seq(1,
+                                                 length(plot_db_01_02$cluster),
+                                                 1))),
     sec.axis = sec_axis(~.,
                         breaks = seq(1, length(plot_db_01_02$cluster), 1),
                         labels = plot_db_01_02$top_features)) +
@@ -115,15 +155,15 @@ p <- ggplot(plot_db_01_02 %>%
     panel.background = element_blank(),
     panel.grid.major.x = element_line(color = "gray60", linetype = "dotted"),
     panel.grid.major.y = element_line(color = "gray80", size = 0.2),
-    text = element_text(family = "LM Roman 10", color = "black"),
+    text = element_text(family = "LMRoman10-Regular", color = "black"),
     axis.text = element_text(size = 16),
     axis.title = element_text(size = 18),
     axis.ticks = element_blank()
   )
 
-ggsave(p, filename = paste0(data_path, "03-paper-data/Grimmer_lda/figures/",
-                            "prop_docs_in_each_cluster_by_topic.pdf"),
-       width = 16, height = 18, units = "in", device = cairo_pdf)
+# ggsave(p, filename = paste0(data_path, "03-paper-data/Grimmer_lda/figures/",
+#                            "prop_docs_in_each_cluster_by_topic_41_47.pdf"),
+#       width = 16, height = 18, units = "in", device = cairo_pdf)
 
 
 # [B] Showing how each doc covariate is associated to each cluster, by model
@@ -320,7 +360,7 @@ for (cluster in cluster_list) {
 
 # - save a copy of the resulting ouptut
 # write.csv(output, paste0(
-#   data_path, "03-paper-data/Grimmer_lda/cluster_covariate_indiv_effects.csv"
+#   data_path, "03-paper-data/Grimmer_lda/cluster_covariate_indiv_effects_41-47.csv"
 # ), row.names = FALSE)
 
 # - rename the covariate labels
@@ -356,14 +396,437 @@ p2 <- ggplot(output %>%
     panel.grid.major.x = element_line(color = "gray60", linetype = "dotted"),
     panel.grid.major.y = element_line(color = "gray60", linetype = "dotted",
                                       size = 0.5),
-    text = element_text(family = "LM Roman 10"),
+    #text = element_text(family = "LM Roman 10"),
+    text = element_text(family = "LMRoman10-Regular"),
     axis.text = element_text(size = 14),
     axis.title = element_text(size = 16),
     strip.text = element_text(size = 16),
     axis.ticks = element_blank()
   )
 
-ggsave(p2, filename = paste0(data_path, "03-paper-data/Grimmer_lda/figures/",
-                            "covariates_ensemble_first_differences.pdf"),
-       width = 16, height = 18, units = "in", device = cairo_pdf)
+# ggsave(p2, filename = paste0(data_path, "03-paper-data/Grimmer_lda/figures/",
+#                             "covariates_ensemble_first_differences_41_47.pdf"),
+#        width = 16, height = 18, units = "in", device = cairo_pdf)
+
+
+# [C] A Replication of Grimmer's "Appropriators not Position Takers"
+#-------------------------------------------------------------------------------
+# - create a more complete document-level dataset by merging two pervious ones
+doc_data$year <- doc_covs$Year
+doc_data$date <- doc_covs$Date
+
+# - add a var to 'cluster_covs' indicating only the cluster number (not label)
+cluster_covs$cluster_num <- gsub("cluster_", "", cluster_covs$cluster)
+
+# - /!\ some RECODING of the cluster type
+cluster_covs$type[which(cluster_covs$cluster_num %in%
+                    c("34"))] <- "credit-claiming"
+
+# - for each author, year and model:
+#       * calculate proportion of docs with a dominant Credit-Claiming cluster
+#       * calculate proportion of docs with a dominant Position-Taking cluster
+#       * calculate the difference between the two proportions: Balance measure
+author_year_model_balance <- NULL
+authors <- unique(doc_data$author)
+model_labels <- paste0("model_k_", c(r@lda_u@k, r@K))
+years <- c(2005, 2006, 2007)
+
+for (a in authors) {
+  # - select all documents from this Senator
+  a_docs <- doc_data %>% filter(author == a)
+
+  # - iterate through years
+  for (yr in years) {
+    # - select the press releases from that year
+    year_docs <- a_docs %>%
+      filter(year == yr)
+
+    if (nrow(year_docs) > 0) {
+
+      # - iterate through the original and alternative model
+      for (m in model_labels) {
+          # - select the doc cluster classification according to that model
+          m_cluster_doc_output <- year_docs[, m]
+
+          # - group the Credit-Claimin and Position-Taking docs
+          a_docs_n <- nrow(year_docs)
+          cred_cl <- m_cluster_doc_output[which(
+            m_cluster_doc_output %in%
+              as.numeric(
+                cluster_covs$cluster_num[cluster_covs$type == "credit-claiming"])
+            )]
+          cred_cl_out <- length(cred_cl) /a_docs_n
+          pos_tk <- m_cluster_doc_output[which(
+            m_cluster_doc_output %in%
+              as.numeric(
+                cluster_covs$cluster_num[cluster_covs$type == "position-taking"])
+          )]
+          pos_tk_out <- length(pos_tk) /a_docs_n
+          balance <- cred_cl_out - pos_tk_out
+
+          # - save the information for this author/year/model
+          new_row <- data.frame(
+            author = a,
+            year = yr,
+            model = m,
+            doc_n = a_docs_n,
+            credit_claiming_n = length(cred_cl),
+            credit_claiming_prop = cred_cl_out,
+            position_taking_n = length(pos_tk),
+            position_taking_prop = pos_tk_out,
+            balance = balance
+          )
+          author_year_model_balance <- rbind(
+            author_year_model_balance, new_row
+          )
+      }
+    }
+  }
+}
+
+# - grimmer's "variables" object to dataframe. Also, adding new variable "year"
+member_covs <- as.data.frame(variables)
+member_covs$author <- gsub("theta.", "", attr(variables$ideal.vec, "names"))
+member_covs <- member_covs %>%
+  mutate(year = ifelse(party == 1 & majority == 1 |
+                         party == 0 & majority == 0, 2007, NA))
+index_2005_start <- 1
+index_2005_end <- which(member_covs$author == "Akaka")[2] - 1
+index_2006_start <- which(member_covs$author == "Akaka")[2]
+index_2006_end <- which(member_covs$author == "Akaka")[3] - 1
+member_covs$year[index_2005_start:index_2005_end] <- 2005
+member_covs$year[index_2006_start:index_2006_end] <- 2006
+
+# - removing from the "author_year_model_balance" dataframe the row with info
+#   about Senators that weren't senators yet
+relevant_obs <- paste0(member_covs$author, "-", member_covs$year)
+author_year_model_balance_ready <- author_year_model_balance %>%
+  mutate(obs_label = paste0(author, "-", year)) %>%
+  filter(obs_label %in% relevant_obs)
+
+# - adding to this dataset with the outcome variable, the covariates of interest
+member_covs$obs_label <- paste0(member_covs$author, "-", member_covs$year)
+member_covs_to_merge <- member_covs %>%
+  dplyr::select(-author, -year) %>%
+  mutate(obs_label = as.character(obs_label))
+
+author_year_model_balance_ready$obs_label <- as.character(
+  author_year_model_balance_ready$obs_label
+)
+
+main_author_db <- left_join(author_year_model_balance_ready,
+                            member_covs_to_merge)
+
+# - estimate now Grimmer's paper model Z times, one for each of the topic
+#   models in the rlda object
+models_output <- NULL
+for (m in model_labels) {
+  # - pull the data from this topic model
+  model_data <- main_author_db %>%
+    filter(model == m)
+
+  # - fit linear regressions using Grimmer's covariates (he fits a diff model:
+  #   a Bayesian Multilevel Linear Regression)
+
+  # ... Outcome 1: Balance (CreditClaiming - PositionTaking)
+  model_01_out <- lmer(balance ~ centered +
+                      party +
+                      majority +
+                      on.cycle +
+                      I(years/100)  +
+                      house +
+                      freshman +
+                      I(state.pop/1e7) +
+                      (1|ind.indic)  +
+                      (1|state.indic),
+                    data = model_data)
+
+  # ... Outcome 2: Credit Claiming
+  model_02_out <- lmer(credit_claiming_prop ~ centered +
+                         party +
+                         majority +
+                         on.cycle +
+                         I(years/100)  +
+                         house +
+                         freshman +
+                         I(state.pop/1e7) +
+                         (1|ind.indic)  +
+                         (1|state.indic),
+                       data = model_data)
+
+  # ... Outcome 3: Position Taking
+  model_03_out <- lmer(position_taking_prop ~ centered +
+                         party +
+                         majority +
+                         on.cycle +
+                         I(years/100)  +
+                         house +
+                         freshman +
+                         I(state.pop/1e7) +
+                         (1|ind.indic)  +
+                         (1|state.indic),
+                       data = model_data)
+
+  # - pulling the statistical model coefficients and CIs
+  model_outputs <- list(model_01_out, model_02_out, model_03_out)
+  clean_model_outputs <- NULL
+  for (mdel in model_outputs) {
+    coef_tbl <- summary(mdel)$coefficients
+    coef_tbl_new <- data.frame(
+      terms = rownames(coef_tbl),
+      pe = as.numeric(coef_tbl[, "Estimate"]),
+      lwr = as.numeric(coef_tbl[, "Estimate"]) -
+        (1.96 * coef_tbl[, "Std. Error"]),
+      upr = as.numeric(coef_tbl[, "Estimate"]) +
+        (1.96 * coef_tbl[, "Std. Error"]),
+      outcome = strsplit(as.character(mdel@call)[2], split = " ~ ")[[1]][1],
+      topic_model = m
+    )
+    rownames(coef_tbl_new) <- NULL
+    clean_model_outputs <- rbind(clean_model_outputs, coef_tbl_new)
+  }
+  models_output <- rbind(models_output, clean_model_outputs)
+}
+
+# - aggregate statistical model results across topic models (taking the average
+#   pe, and the lowest lwr CI and highest upr CI)
+final_model_output <- NULL
+# - iterate through statistical model types
+stat_model_list <- unique(models_output$outcome)
+for (out in stat_model_list) {
+  # - select results only for this statistical model with this outcome variable
+  outcome_res <- models_output %>%
+    filter(outcome == out)
+
+  # - average results across topic models
+  outcome_res_across <- outcome_res %>%
+    group_by(terms) %>%
+    summarise(
+      outcome = out,
+      pe = mean(pe),
+      lwr = min(lwr),
+      upr = max(upr)
+    )
+
+  final_model_output <- rbind(
+    final_model_output, outcome_res_across
+  )
+}
+
+# - better labels for the covariates
+final_model_output$terms <- recode(final_model_output$terms,
+                                   `(Intercept)` = "Intercept",
+                                   `centered` = "Alignment",
+                                   `party` = "Democrat",
+                                   `I(years/100)` = "Years/100",
+                                   `house` = "Former House Member",
+                                   `freshman` = "Freshman",
+                                   `majority` = "Majority",
+                                   `on.cycle` = "In Cycle",
+                                   `I(state.pop/1e+07)` = "State Pop. (Millions)")
+
+# - better labels for the outcomes
+final_model_output$outcome <- recode(final_model_output$outcome,
+                                   `balance` = "Credit Claiming - Position Taking",
+                                   `credit_claiming_prop` = "Credit Claiming",
+                                   `position_taking_prop` = "Position Taking")
+
+# - the same for the partial stat model results
+models_output$terms <- recode(models_output$terms,
+                                   `(Intercept)` = "Intercept",
+                                   `centered` = "Alignment",
+                                   `party` = "Democrat",
+                                   `I(years/100)` = "Years/100",
+                                   `house` = "Former House Member",
+                                   `freshman` = "Freshman",
+                                   `majority` = "Majority",
+                                   `on.cycle` = "In Cycle",
+                                   `I(state.pop/1e+07)` = "State Pop. (Millions)")
+
+models_output$outcome <- recode(models_output$outcome,
+                                `balance` = "Credit Claiming - Position Taking",
+                                `credit_claiming_prop` = "Credit Claiming",
+                                `position_taking_prop` = "Position Taking")
+
+# - merge partial and aggregated result datasets
+models_output <- models_output %>%
+  dplyr::select(-topic_model) %>%
+  mutate(type = "partial")
+
+final_model_output$type <- "aggregate"
+
+final_res <- rbind(models_output, final_model_output)
+
+# - a dataset with the model results from Grimmer's paper
+# ... create his "balance" outcome variables
+exp.apps<- list.dep[[1]]
+exp.subs<- list.dep[[2]]
+diff<- exp.apps - exp.subs
+# ... now name the covariates the same way he does in his replication code
+centered.rat<- variables[[1]]
+party<- variables[[2]]
+majority<- variables[[3]]
+on.cycle<- variables[[4]]
+house<- variables[[5]]
+freshman<- variables[[6]]
+state.pop<- variables[[7]]
+ind.indic<- variables[[8]]
+state.indic<- variables[[9]]
+ideal.vec<- variables[[10]]
+approp.mem<- variables[[11]]
+years<- variables[[12]]
+# ... estimating the models (following exactly his code)
+grimmer_01 <- lmer(diff~centered.rat + party + majority + on.cycle +  I(years/100)
+               + house + freshman +  I(state.pop/1e7) + (1|ind.indic)  +
+                 (1|state.indic))
+grimmer_02 <- lmer(exp.apps~centered.rat + party + majority + on.cycle +
+                     I(years/100)  + house +  freshman +  I(state.pop/1e7) +
+                     (1|ind.indic)  + (1|state.indic))
+
+grimmer_03<- lmer(exp.subs~centered.rat + party + majority + on.cycle +
+                 I(years/100)  + house +  freshman +  I(state.pop/1e7) +
+                 (1|ind.indic)  + (1|state.indic))
+# ... cleaning the model outputs from grimmer
+model_outputs_grimmer <- list(grimmer_01, grimmer_02, grimmer_03)
+clean_model_outputs_grimmer <- NULL
+for (mdel in model_outputs_grimmer) {
+  coef_tbl <- summary(mdel)$coefficients
+  coef_tbl_new <- data.frame(
+    terms = rownames(coef_tbl),
+    pe = as.numeric(coef_tbl[, "Estimate"]),
+    lwr = as.numeric(coef_tbl[, "Estimate"]) -
+      (1.96 * coef_tbl[, "Std. Error"]),
+    upr = as.numeric(coef_tbl[, "Estimate"]) +
+      (1.96 * coef_tbl[, "Std. Error"]),
+    outcome = strsplit(as.character(mdel@call)[2], split = " ~ ")[[1]][1]
+  )
+  rownames(coef_tbl_new) <- NULL
+  clean_model_outputs_grimmer <- rbind(clean_model_outputs_grimmer, coef_tbl_new)
+}
+# ... rename covariates and outcome variables
+clean_model_outputs_grimmer$terms <- recode(clean_model_outputs_grimmer$terms,
+                              `(Intercept)` = "Intercept",
+                              `centered.rat` = "Alignment",
+                              `party` = "Democrat",
+                              `I(years/100)` = "Years/100",
+                              `house` = "Former House Member",
+                              `freshman` = "Freshman",
+                              `majority` = "Majority",
+                              `on.cycle` = "In Cycle",
+                              `I(state.pop/1e+07)` = "State Pop. (Millions)")
+
+clean_model_outputs_grimmer$outcome <- recode(clean_model_outputs_grimmer$outcome,
+                                `diff` = "Credit Claiming - Position Taking",
+                                `exp.apps` = "Credit Claiming",
+                                `exp.subs` = "Position Taking")
+
+# - transform some large coefficients to fit a secondary axis
+vars_to_transf <- c("Alignment", "Years/100")
+scalar <- 4
+for (v in vars_to_transf) {
+  clean_model_outputs_grimmer$pe[clean_model_outputs_grimmer$terms == v] <-
+    clean_model_outputs_grimmer$pe[clean_model_outputs_grimmer$terms == v] / scalar
+  clean_model_outputs_grimmer$lwr[clean_model_outputs_grimmer$terms == v] <-
+    clean_model_outputs_grimmer$lwr[clean_model_outputs_grimmer$terms == v] / scalar
+  clean_model_outputs_grimmer$upr[clean_model_outputs_grimmer$terms == v] <-
+    clean_model_outputs_grimmer$upr[clean_model_outputs_grimmer$terms == v] / scalar
+
+  final_res$pe[final_res$terms == v] <-
+    final_res$pe[final_res$terms == v] / scalar
+  final_res$lwr[final_res$terms == v] <-
+    final_res$lwr[final_res$terms == v] / scalar
+  final_res$upr[final_res$terms == v] <-
+    final_res$upr[final_res$terms == v] / scalar
+
+}
+
+final_res$scalar <- 0
+final_res$scalar[which(as.character(final_res$terms) %in% vars_to_transf)] <- 1
+
+clean_model_outputs_grimmer$scalar <- 0
+clean_model_outputs_grimmer$scalar[
+  which(as.character(clean_model_outputs_grimmer$terms) %in% vars_to_transf)] <- 1
+
+
+# - get rid of the intercept
+final_res <- final_res %>%
+  filter(terms != "Intercept") %>%
+  mutate(terms = as.factor(as.character(terms)))
+
+clean_model_outputs_grimmer <- clean_model_outputs_grimmer %>%
+  filter(terms != "Intercept") %>%
+  mutate(terms = as.factor(as.character(terms)))
+
+# - sorting the results so Alignment and Years/100 (re-scaled coefficients) are
+#   at the bottom
+final_res <- final_res %>%
+  mutate(terms = factor(terms, levels = rev(c(
+    "Alignment", "Years/100", "Democrat", "Former House Member",
+    "Freshman", "Majority", "In Cycle", "State Pop. (Millions)"
+  ))))
+
+clean_model_outputs_grimmer <- clean_model_outputs_grimmer %>%
+  mutate(terms = factor(terms, levels = rev(c(
+    "Alignment", "Years/100", "Democrat", "Former House Member",
+    "Freshman", "Majority", "In Cycle", "State Pop. (Millions)"
+  ))))
+
+# - PLOT comparing our "robust" results to Grimmer's original results.
+
+p3 <- ggplot(final_res %>%
+         filter(type == "partial"),
+       aes(x = as.numeric(terms), y = pe, ymin = lwr, ymax = upr)) +
+  geom_segment(
+    inherit.aes = FALSE,
+    data = final_res %>% filter(type == "aggregate"),
+    aes(x = terms,
+        xend = terms,
+        y = lwr, yend = upr), color = "deepskyblue2", size = 4, alpha = 0.3) +
+  geom_pointrange(alpha = 0.1, pch = 20, size = 1.1) +
+  geom_pointrange(inherit.aes = FALSE,
+                  data = clean_model_outputs_grimmer,
+                  aes(
+                    x = as.numeric(terms) + 0.2, y = pe, ymin = lwr, ymax = upr,
+                    shape = as.character(scalar)), color = "red") +
+  scale_shape_manual(values = c(16, 17)) +
+  geom_point(
+    inherit.aes = FALSE,
+    data = final_res %>% filter(type == "aggregate"),
+    aes(x = terms, y = pe), pch = 4, size = 6) +
+  geom_hline(yintercept = 0, color = "red", alpha = 0.7) +
+  coord_flip() +
+  facet_wrap(~outcome) +
+  scale_x_discrete("") +
+  scale_y_continuous(
+    "\nAggregated coefficients (+95% confidence intervals) from Bayesian Multilevel Linear Regression",
+    sec.axis = sec_axis(trans = ~.*4, breaks = seq(-1.2, 1.2, .5)),
+    expand = c(0,0),
+    breaks = seq(-.45, .5, .1),
+    limits = c(-.4, .4)) +
+  geom_polygon(inherit.aes = FALSE,
+               data = data.frame(x = c(6.5, 6.5, 8.75, 8.75),
+                                 y = c(-.4, 0.4, 0.4, -0.4)),
+               aes(x = x , y = y),
+               fill = "gray70", alpha = 0.3) +
+  theme(
+    panel.background = element_blank(),
+    panel.border = element_rect(colour = "black", fill = NA),
+    strip.background = element_rect(colour = "black", fill = "gray90"),
+    panel.grid.major.x = element_line(color = "gray60", linetype = "dotted"),
+    panel.grid.major.y = element_line(color = "gray60", linetype = "dotted",
+                                      size = 0.5),
+    text = element_text(family = "LMRoman10-Regular"),
+    axis.text = element_text(size = 16),
+    axis.title = element_text(size = 16),
+    strip.text = element_text(size = 18 ),
+    #axis.ticks = element_blank(),
+    strip.placement = "outside",
+    panel.spacing = unit(2, "lines"),
+    legend.position = "none"
+  )
+
+ggsave(p3, filename = paste0(data_path, "03-paper-data/Grimmer_lda/figures/",
+                            "grimmer_models_41_47.pdf"),
+       width = 16, height = 10, units = "in", device = cairo_pdf)
+
 
