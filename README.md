@@ -4,7 +4,7 @@ This is a package to assess LDA topic instability and robustness
 ## Authors
 [Andreu Casas](http://andreucasas.com/) (Moore-Sloan Fellow, Center for Data Science, New York University)
 
-Tiany Bi (Center for Data Science, New York University)
+Tianyi Bi (Center for Data Science, New York University)
 
 ## Sponsors
 We are greatful to the [Moore Sloan Data Science Enviornment](http://msdse.org/) for supporting the development of this research project and open-source software.
