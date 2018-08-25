@@ -18,7 +18,8 @@ library(lme4)
 # PATHS & CONSTANTS
 #===============================================================================
 #data_path <- paste0("~/Google Drive/andreu_tia/projects/rlda/Data/")
-data_path <- paste0("~/Desktop/Google Drive/andreu_tia/projects/rlda/Data/")
+#data_path <- paste0("~/Desktop/Google Drive/andreu_tia/projects/rlda/Data/")
+data_path <- paste0("~/Desktop/andreu_tia/projects/rlda/Data/")
 
 # DATA
 #===============================================================================
@@ -114,6 +115,9 @@ for (j in 1:ncol(features_nested_list[[1]])) {
 
 plot_db_01_02$top_features <- features_list_str
 
+# - adding cluster labels
+plot_db_01_02$cluster_label <- cluster_covs$cluster_label
+
 # - write out a copy of this dataset showing only the cluster number and the
 #   most predictive features of each cluster
 # write.csv(plot_db_01_02 %>% dplyr::select(cluster, top_features),
@@ -123,12 +127,27 @@ plot_db_01_02$top_features <- features_list_str
 #                                  they're about Credit Claiming / Position Taking
 #                                  or something else.
 
+# - one of the clusters is misslabeled
+plot_db_01_02$cluster_label <- as.character(plot_db_01_02$cluster_label)
+plot_db_01_02$cluster_label[36] <- "History/Heritage (II)"
+plot_db_01_02$cluster_label[38] <- "History/Heritage (III)"
+
+# - relevel cluster numbers so the cluster #1 shows up first
+plot_db_01_02$cluster <- factor(plot_db_01_02$cluster,
+                                levels = rev(c(plot_db_01_02$cluster)))
+
+plot_db_01_02 <- plot_db_01_02 %>%
+  arrange(cluster) %>%
+  mutate(cluster = as.factor(as.character(cluster)))
+
+
+
 # - a plot showing the proportion that get classified into the same cluster by
-#   model
+#   each model
 p <- ggplot(plot_db_01_02 %>%
          mutate(cluster = as.numeric(gsub("cluster_", "", cluster))),
        aes(x = cluster, y = pe, ymin = lwr, ymax = upr)) +
-  geom_pointrange(size = 1.1) +
+  geom_pointrange(size = 1.1, alpha = 0.8) +
   geom_point(inherit.aes = FALSE,
              data = plot_db_01_01 %>%
                mutate(cluster = as.numeric(gsub("cluster_", "", cluster))),
@@ -141,11 +160,11 @@ p <- ggplot(plot_db_01_02 %>%
                      expand = c(0.01, 0.01),
                      limits = c(1, length(plot_db_01_02$cluster)),
                      breaks = seq(1, length(plot_db_01_02$cluster), 1),
-                     labels = paste0("Cluster ",
-                                     sprintf("%02d",
-                                             seq(1,
-                                                 length(plot_db_01_02$cluster),
-                                                 1))),
+                     labels = paste0(sprintf("%02d",
+                                             seq(length(plot_db_01_02$cluster),
+                                                 1)),
+                                     ". ",
+                                     plot_db_01_02$cluster_label),
     sec.axis = sec_axis(~.,
                         breaks = seq(1, length(plot_db_01_02$cluster), 1),
                         labels = plot_db_01_02$top_features)) +
@@ -155,15 +174,16 @@ p <- ggplot(plot_db_01_02 %>%
     panel.background = element_blank(),
     panel.grid.major.x = element_line(color = "gray60", linetype = "dotted"),
     panel.grid.major.y = element_line(color = "gray80", size = 0.2),
-    text = element_text(family = "LMRoman10-Regular", color = "black"),
+    #text = element_text(family = "LMRoman10-Regular", color = "black"),
+    text = element_text(family = "LM Roman 10", color = "black"),
     axis.text = element_text(size = 16),
     axis.title = element_text(size = 18),
     axis.ticks = element_blank()
   )
 
-# ggsave(p, filename = paste0(data_path, "03-paper-data/Grimmer_lda/figures/",
-#                            "prop_docs_in_each_cluster_by_topic_41_47.pdf"),
-#       width = 16, height = 18, units = "in", device = cairo_pdf)
+ggsave(p, filename = paste0(data_path, "03-paper-data/Grimmer_lda/figures/",
+                           "prop_docs_in_each_cluster_by_topic_41_47.pdf"),
+      width = 16, height = 18, units = "in", device = cairo_pdf)
 
 
 # [B] Showing how each doc covariate is associated to each cluster, by model
