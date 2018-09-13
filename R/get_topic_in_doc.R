@@ -46,7 +46,7 @@ setMethod("getTopicInDoc",
             dom_top_ind_old = apply(topic_mod_gamma_or, 1, function(x){order(x, decreasing = TRUE)[1]})
             # Count number of documents dominated by each old topic
             total_doc_dom = tapply(rep(1, doc_num), dom_top_ind_old, FUN = sum)
-            topic_dom_list[[1]]= total_doc_dom/doc_num
+            topic_dom_list[[1]]= matrix(total_doc_dom/doc_num)
             for( i in 1:length(r@K) )
             {
               # similarity matrix result, each row is similarity between A_i with B

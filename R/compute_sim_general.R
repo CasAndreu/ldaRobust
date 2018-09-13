@@ -36,6 +36,7 @@ setMethod("compute_sim_general",
             feature_list = list()
             i = 0
             j = 0
+            feature_list[[1]] = apply(r@beta_list[[r@idx]], 1, function(x){r@terms[order(x, decreasing = TRUE)][1:10]})
             for( i in 1:length(r@K) )
             {
               j=j+1
@@ -47,7 +48,7 @@ setMethod("compute_sim_general",
               # similarity matrix result, each row is similarity between A_i with B
               topic_mod_beta = r@beta_list[[i]]
               sim_mat = sim_func(words_in_topics, topic_mod_beta)
-              sim_list[[j]] = apply(sim_mat, 1, max)
+              sim_list[[j+1]] = apply(sim_mat, 1, max)
               #print(sim_list[[j]])
               sim_mat_list[[j]] = sim_mat
               feature_list[[j]] = apply(r@beta_list[[i]], 1, function(x){r@terms[order(x, decreasing = TRUE)][1:10]})

@@ -9,6 +9,9 @@
 #' @import parallel
 #' @import ggplot2
 #' @import reshape2
+#' @import dplyr
+#' @import tidyr
+#' @import lsa
 #' @importClassesFrom topicmodels LDA
 #' @import tm
 #' @slot  dtm document term matrix
@@ -29,7 +32,7 @@
 #' @slot key_features top 10 features of a given topic in each model tried
 #' @slot topic_dom_perc_list percentage of documents dominated by the given topic out of documents originally dominated by similar topic in the original model
 #' @slot dominant_topic_cluster_list clusters correponding to dominant topics of each document in each model
-#' @slot cluster_center_key_words_list top 10 keywords for each center found by the cluster algorithn (so far only support spectral clustering)
+#' @slot cluster_center_key_words_list (data_frame?) top 10 keywords for each center found by the cluster algorithn (so far only support spectral clustering)
 #' @slot perc_document_belong_cluster_list percentage of documents belong to a given cluster in a given model
 #' @slot topic_cluster_assignment cluster number a given topic belongs to
 #' @exportClass rlda
@@ -39,6 +42,15 @@
 #'
 #'
 devtools::use_package("topicmodels")
+devtools::use_package("SnowballC")
+devtools::use_package("ggplot2")
+devtools::use_package("doParallel")
+devtools::use_package("kernlab")
+devtools::use_package("dplyr")
+devtools::use_package("tidyr")
+devtools::use_package("lme4")
+devtools::use_package("lsa")
+
 #setClassUnion("Nul_meric", c("numeric", "NULL"))
 #setClassUnion("Nul_DA", c("LDA", "NULL"))
 
@@ -62,9 +74,9 @@ setClass("rlda",
                         topic_dom_perc_list = "list",
                         dominant_topic_cluster_list = "list",
                         key_features = "list",
-                        cluster_center_key_words_list = "list",
+                        cluster_center_key_words_list = "data.frame",
                         perc_document_belong_cluster_list = "list",
-                        topic_cluster_assignment = "list"
+                        topic_cluster_assignment = "matrix"
          ),
          prototype(K=5,
                    threshold=0.5,

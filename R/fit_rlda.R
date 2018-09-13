@@ -80,6 +80,8 @@ setMethod("fit",
               #save seed list, run lda
             }
 
+            feature_list[[1]] = apply(LDA_u@beta, 1, function(x){terms_u[order(x, decreasing = TRUE)][1:10]})
+
             # get top 10 features for each model
             for (i in 1:length(lda_list))
             {
@@ -89,7 +91,7 @@ setMethod("fit",
               # each column is top 10 feature for each topic in model_i
               mod = lda_list[[i]]
               top_f = apply(mod@beta, 1, function(x){terms_u[order(x, decreasing = TRUE)][1:10]})
-              feature_list[[i]] = top_f
+              feature_list[[i+1]] = top_f
               beta_list[[i]] = mod@beta
               gamma_list[[i]] = mod@gamma
             }
