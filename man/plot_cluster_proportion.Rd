@@ -4,7 +4,7 @@
 \alias{plot_cluster_proportion}
 \title{plot_cluster_proportions}
 \usage{
-plot_cluster_proportion(r, dir, cluster_info, doc_covs)
+plot_cluster_proportion(r, dir)
 }
 \arguments{
 \item{r}{a rlda object}

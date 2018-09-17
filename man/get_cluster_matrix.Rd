@@ -4,10 +4,12 @@
 \alias{get_cluster_matrix}
 \title{get_cluster_matrix}
 \usage{
-get_cluster_matrix(r)
+get_cluster_matrix(r, sim_threshold)
 }
 \arguments{
 \item{r}{a rlda object}
+
+\item{sim_threshold}{similarity threshold}
 }
 \description{
 compute clustering of topics across different models

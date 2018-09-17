@@ -4,10 +4,12 @@
 \alias{getTopicInDoc}
 \title{getTopicInDoc}
 \usage{
-getTopicInDoc(r)
+getTopicInDoc(r, sim_threshold)
 }
 \arguments{
 \item{r}{a rlda object}
+
+\item{sim_threshold}{similarity threshold}
 }
 \description{
 compute percentage of old documents dominated by a given old topic in the new model

@@ -4,7 +4,7 @@
 \alias{or_topic_in_alt_plot}
 \title{or_topic_in_alt_plot}
 \usage{
-or_topic_in_alt_plot(r, dir, cluster_info)
+or_topic_in_alt_plot(r, dir)
 }
 \arguments{
 \item{r}{a rlda object}
