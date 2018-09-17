@@ -4,15 +4,13 @@
 #'
 #' @param r a rlda object
 #' @param dir directory to save plot
-#' @param cluster_info
-#' @param doc_covs
 #' @exportMethod plot_cluster_proportion
 #'
 
-setGeneric("plot_cluster_proportion", function(r, dir, cluster_info, doc_covs)standardGeneric("plot_cluster_proportion"))
+setGeneric("plot_cluster_proportion", function(r, dir)standardGeneric("plot_cluster_proportion"))
 setMethod("plot_cluster_proportion",
-          signature(r = "rlda", dir = "character", cluster_info = "data.frame", doc_covs = "data.frame"),
-          function (r, dir, cluster_info, doc_covs) {
+          signature(r = "rlda", dir = "character"),
+          function (r, dir) {
             # [D] PROPORTION OF DOCS ON EACH TOPICS/CLUSTER BY MODEL
             #-------------------------------------------------------------------------------
             # - a document-model matrix indicating into which cluster each document has been
@@ -20,18 +18,14 @@ setMethod("plot_cluster_proportion",
             k_list <- c(r@lda_u@k, r@K)
             cluster_mat <- r@topic_cluster_assignment
             cluster_top_features <- r@cluster_center_key_words_list
+            top_stability_mat <- r@top_stability_mat
+
+
             orig_altern_models_k_list <- k_list
             doc_mat_cluster <- as.data.frame(matrix(
               nrow = nrow(r@dtm),
               ncol = length(orig_altern_models_k_list)))
             colnames(doc_mat_cluster) <- paste0("model_k_", orig_altern_models_k_list)
-
-            # - adding info about the author and timestamp of the document. This will help
-            #   make sure we aren't messing up the merging of the doc-level covariates
-            doc_mat_cluster$author <- as.character(sapply(dimnames(r@dtm)$Docs, function(x)
-              strsplit(x, split = "\\\\")[[1]][3]))
-            doc_mat_cluster$file <- as.character(sapply(dimnames(r@dtm)$Docs, function(x)
-              strsplit(x, split = "\\\\")[[1]][4]))
 
             # - adding now the information about into which cluster each document has been
             #   classified
@@ -72,17 +66,17 @@ setMethod("plot_cluster_proportion",
             }
 
             # - a subset of the covariate dataset, only including "Party" and "Ideology"
-            doc_covs_reduced <- doc_covs %>%
-              dplyr::select(File, party, ideal) %>%
-              rename(file_grimmer = File)
+            #doc_covs_reduced <- doc_covs %>%
+            #  dplyr::select(File, party, ideal) %>%
+            #  rename(file_grimmer = File)
 
             # - merging this doc-cluster assignment data to the doc covariates matrix
             #   /!\ 6May2005akaka77.txt a Good Example of this topic instability
             #   /!\ 3Aug2006BillNelson23.txt a Good Example of topic Stability
-            doc_data <- cbind(doc_mat_cluster, doc_covs_reduced) %>%
+            #doc_data <- cbind(doc_mat_cluster, doc_covs_reduced) %>%
               # - the covariates and model-topic-cluster information matches: getting rid
               #   of one of the file name variables
-              dplyr::select(-file_grimmer)
+            #  dplyr::select(-file_grimmer)
 
             # - iterating through clusters and models to calculate the proportion of docs on
             #   each cluster by model
@@ -91,9 +85,9 @@ setMethod("plot_cluster_proportion",
               # - iterate though models
               for (model in paste0("model_k_", orig_altern_models_k_list)) {
                 # - pull the proportion of message about this topic/cluster in this model
-                if (length(which(doc_data[,model] == cluster)) > 0) {
-                  cluster_model_prop <- length(which(doc_data[,model] == cluster)) /
-                    nrow(doc_data)
+                if (length(which(doc_mat_cluster[,model] == cluster)) > 0) {
+                  cluster_model_prop <- length(which(doc_mat_cluster[,model] == cluster)) /
+                    nrow(doc_mat_cluster)
                 } else {
                   cluster_model_prop <- 0
                 }
@@ -123,14 +117,13 @@ setMethod("plot_cluster_proportion",
             docs_by_cluster <- left_join(docs_by_cluster, cluster_top_features_to_merge)
 
             # - adding topic labels
-            cluster_labels_to_merge <- cluster_info %>%
-              dplyr::select(top_cluster_num, cluster_label) %>%
+            cluster_labels_to_merge <- top_stability_mat %>%
+              dplyr::select(top_cluster_num) %>%
               rename(cluster = top_cluster_num) %>%
               mutate(cluster = as.character(cluster))
+
             docs_by_cluster <- left_join(docs_by_cluster, cluster_labels_to_merge)
-            docs_by_cluster$label <- paste0(
-              sprintf("%02d", as.numeric(docs_by_cluster$cluster)),
-              ". ", docs_by_cluster$cluster_label)
+            docs_by_cluster$label <- paste("cluster", docs_by_cluster$cluster)
 
             # - sort by average proportion
             docs_by_cluster <- docs_by_cluster %>%
@@ -139,25 +132,25 @@ setMethod("plot_cluster_proportion",
 
             # - transfer this sorting to the by cluster and model dataset
             label_to_merge <- docs_by_cluster %>%
-              dplyr::select(cluster, cluster_label) %>%
+              dplyr::select(cluster) %>%
               mutate(cluster = as.character(cluster))
             docs_by_cluster_and_model$cluster <- as.character(docs_by_cluster_and_model$cluster)
             docs_by_cluster_and_model <- left_join(docs_by_cluster_and_model,
                                                    label_to_merge)
-            docs_by_cluster_and_model$label <- paste0(
-              sprintf("%02d", as.numeric(docs_by_cluster_and_model$cluster)),
-              ". ", docs_by_cluster_and_model$cluster_label)
+            docs_by_cluster_and_model$label <- paste("cluster", docs_by_cluster_and_model$cluster)
 
             docs_by_cluster_and_model <- docs_by_cluster_and_model %>%
               mutate(label = factor(
                 as.character(label),
                 levels = as.character(unique(docs_by_cluster$label))))
 
+            r@docs_by_cluster_and_model <- docs_by_cluster_and_model
+
             # - the plot
             # pdf(paste0(data_path, "03-paper-data/Grimmer_lda/figures/",
             #            "prop_docs_in_each_cluster_by_topic_41_47-STRICT.pdf"),
             #     width = 20, height = 18)
-            ggplot(docs_by_cluster_and_model,
+            p <- ggplot(docs_by_cluster_and_model,
                    aes(x = as.numeric(label), y = prop)) +
               geom_pointrange(inherit.aes = FALSE,
                               data = docs_by_cluster,
@@ -187,6 +180,8 @@ setMethod("plot_cluster_proportion",
                 #axis.title = element_text(size = 18),
                 axis.ticks = element_blank()
               )
+            print(p)
             #dev.off()
+            return(r)
           })
 

@@ -15,9 +15,8 @@
 #' @importClassesFrom topicmodels LDA
 #' @import tm
 #' @slot  dtm document term matrix
-#' @slot LDA_u lda object(in topicmodels)
+#' @slot lda_u lda object(in topicmodels)
 #' @slot K numeric or vector, if numeric, number of k to try, if vector, k's to try (will be overwrite with list of k's tried once fit has been run)
-#' @slot threshold, sim_threshold, threshold for return2, between [0,1]
 #' @slot compute_parallel bool, if true, will parallel when fitting lda models; otherwise, sequential for fitting
 #' @slot same_k_estimation, integer, number of initial states to try, if 0, do not try with diff state
 #' @slot similarity_measure string, similarity measure (so far cosine or hellinger). Default: cosine
@@ -35,6 +34,8 @@
 #' @slot cluster_center_key_words_list (data_frame?) top 10 keywords for each center found by the cluster algorithn (so far only support spectral clustering)
 #' @slot perc_document_belong_cluster_list percentage of documents belong to a given cluster in a given model
 #' @slot topic_cluster_assignment cluster number a given topic belongs to
+#' @slot top_stability_mat
+#' @slot doc_by_cluster_and_model
 #' @exportClass rlda
 #'
 #'
@@ -58,7 +59,7 @@ setClass("rlda",
          representation(dtm="DocumentTermMatrix",
                         lda_u = "LDA",
                         K = "numeric",
-                        threshold="numeric",
+                        #threshold="numeric",
                         same_k_estimation="numeric",
                         compute_parallel = "logical",
                         similarity_measure="character",
@@ -76,10 +77,12 @@ setClass("rlda",
                         key_features = "list",
                         cluster_center_key_words_list = "data.frame",
                         perc_document_belong_cluster_list = "list",
-                        topic_cluster_assignment = "matrix"
+                        topic_cluster_assignment = "matrix",
+                        top_stability_mat = "data.frame",
+                        docs_by_cluster_and_model = "data.frame"
          ),
          prototype(K=5,
-                   threshold=0.5,
+                   #threshold=0.5,
                    same_k_estimation=0,
                    similarity_measure="cosine",
                    compute_parallel = TRUE,

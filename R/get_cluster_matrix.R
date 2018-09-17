@@ -4,13 +4,14 @@
 #'
 #' @include compute_sim.R
 #' @param r a rlda object
+#' @param sim_threshold similarity threshold
 #' @exportMethod get_cluster_matrix
 #'
 
-setGeneric("get_cluster_matrix", function(r)standardGeneric("get_cluster_matrix"))
+setGeneric("get_cluster_matrix", function(r, sim_threshold)standardGeneric("get_cluster_matrix"))
 setMethod("get_cluster_matrix",
-          signature(r = "rlda"),
-          function (r) {
+          signature(r = "rlda", sim_threshold = "numeric"),
+          function (r, sim_threshold) {
             k_list <- c(r@lda_u@k, r@K)
             beta_mat <- r@lda_u@beta
             for (topic_model_i in 1:length(r@beta_list)) {
@@ -19,7 +20,7 @@ setMethod("get_cluster_matrix",
             #sim_mat <- get_sim_matrix(beta_mat)
             sim_mat <- cos_sim(beta_mat, beta_mat)
 
-            cluster_mat <- get_cluster_matrix_sub(sim_mat, k_list, r@threshold)
+            cluster_mat <- get_cluster_matrix_sub(sim_mat, k_list, sim_threshold)
 
 
             cluster_top_features <- get_cluster_top_features(cluster_mat, beta_mat,
@@ -27,6 +28,92 @@ setMethod("get_cluster_matrix",
 
             r@topic_cluster_assignment <- cluster_mat
             r@cluster_center_key_words_list <- cluster_top_features
+
+            # get top_stability_mat
+            k_list <- c(r@lda_u@k, r@K)
+            or_topics_alt_models_mat <- as.data.frame(matrix(nrow = k_list[1],
+                                                             ncol = (length(k_list)-1)))
+
+            # - iterate through original topics and checking whether they are in alternative
+            #   models
+            for (i in (1:k_list[1])) {
+              for (j in 1:(length(k_list)-1)) {
+                # - pull the number of topics of the first alternative model
+                j_num_topics <- k_list[j + 1]
+                # - calculate the row indices of the topics of this alternative model in the
+                #   cluster matrix
+                if (j == 1) {
+                  cluster_mat_alt_model_indices <- (k_list[1] + 1):(
+                    k_list[1] + j_num_topics)
+                } else {
+                  cluster_mat_alt_model_indices <- (sum(k_list[1:j]) + 1):(
+                    (sum(k_list[1:j]) + j_num_topics))
+                }
+                # - pull the topic-clusters found in this model
+                alt_model_clusters <- cluster_mat[cluster_mat_alt_model_indices,1]
+                # - check if original topic i is in there
+                if (i %in% alt_model_clusters) {
+                  # - count how many times is present in this alternative model
+                  x <- length(which(alt_model_clusters == i))
+                } else {
+                  x <- 0
+                }
+                # - add the information to the initialized matrix
+                or_topics_alt_models_mat[i,j] <- x
+              }
+            }
+
+            # A matrix indicating whether NEW topic-clusters are present in alternative
+            # models
+            new_topics_alt_models_mat <- as.data.frame(matrix(
+              nrow = length((k_list[1] + 1):max(cluster_mat[,1])),
+              ncol = (length(k_list)-1)))
+
+            # - iterate through original topics and checking whether they are in alternative
+            #   models
+            for (i in ((k_list[1] + 1):max(cluster_mat[,1]))) {
+              for (j in 1:(length(k_list)-1)) {
+                # - pull the number of topics of the first alternative model
+                j_num_topics <- k_list[j + 1]
+                # - calculate the row indices of the topics of this alternative model in the
+                #   cluster matrix
+                if (j == 1) {
+                  cluster_mat_alt_model_indices <- (k_list[1] + 1):(
+                    k_list[1] + j_num_topics)
+                } else {
+                  cluster_mat_alt_model_indices <- (sum(k_list[1:j]) + 1):(
+                    (sum(k_list[1:j]) + j_num_topics))
+                }
+                # - pull the topic-clusters found in this model
+                alt_model_clusters <- cluster_mat[cluster_mat_alt_model_indices,1]
+                # - check if original topic i is in there
+                if (i %in% alt_model_clusters) {
+                  # - count how many times is present in this alternative model
+                  x <- length(which(alt_model_clusters == i))
+                } else {
+                  x <- 0
+                }
+                # - add the information to the initialized matrix
+                new_topics_alt_models_mat[i - (k_list[1]),j] <- x
+              }
+            }
+
+            # Merge these two matrices
+            top_stability_mat <- rbind(
+              or_topics_alt_models_mat,
+              new_topics_alt_models_mat
+            )
+
+            # Add the information about each topic-cluster top features
+            # ... naming the alternative models
+            names(top_stability_mat) <- paste0("k_", k_list[2:length(k_list)])
+            # ... top features
+            top_stability_mat$top_features <- cluster_top_features$top_features
+            # ... numbering the clusters
+            top_stability_mat$top_cluster_num <- paste0(sprintf("%02d",
+                                                                1:nrow(top_stability_mat)))
+
+            r@top_stability_mat = top_stability_mat
 
             return(r)
           })
