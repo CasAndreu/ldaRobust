@@ -3,14 +3,15 @@
 #' compute percentage of old documents dominated by a given old topic in the new model
 #'
 #' @param r a rlda object
+#' @param sim_threshold similarity threshold
 #' @include compute_sim.R
 #' @exportMethod getTopicInDoc
 
-setGeneric("getTopicInDoc", function(r)standardGeneric("getTopicInDoc"))
+setGeneric("getTopicInDoc", function(r, sim_threshold)standardGeneric("getTopicInDoc"))
 setMethod("getTopicInDoc",
-          signature(r = "rlda"),
-          function (r) {
-            thresh = r@threshold
+          signature(r = "rlda", sim_threshold = "numeric"),
+          function (r, sim_threshold) {
+            thresh = sim_threshold
             doc_num = dim(r@dtm)[1]
 
             if(length(r@gamma_list) == 0)
@@ -46,7 +47,7 @@ setMethod("getTopicInDoc",
             dom_top_ind_old = apply(topic_mod_gamma_or, 1, function(x){order(x, decreasing = TRUE)[1]})
             # Count number of documents dominated by each old topic
             total_doc_dom = tapply(rep(1, doc_num), dom_top_ind_old, FUN = sum)
-            topic_dom_list[[1]]= total_doc_dom/doc_num
+            topic_dom_list[[1]]= matrix(total_doc_dom/doc_num)
             for( i in 1:length(r@K) )
             {
               # similarity matrix result, each row is similarity between A_i with B

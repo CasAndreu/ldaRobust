@@ -19,17 +19,17 @@ setMethod("plot_visual_gen",
             # plot similarity matrix
             similarity_list_mat = do.call(cbind, r@similarity_mat_list)
             mod_idx = rep(1:length(k), k)
-            idx_mat = cbind(mod_idx, unlist(lapply(k, function(x) 1:x)))
+            #idx_mat = cbind(mod_idx, unlist(lapply(k, function(x) 1:x)))
             #colnames(similarity_list_mat) = paste(1:dim(similarity_list_mat)[2])
             #rownames(similarity_list_mat) = paste(1:dim(similarity_list_mat)[1])
             #colnames(similarity_list_mat) = paste('t[',1:dim(similarity_list_mat)[2],']',sep='')
-            colnames(similarity_list_mat) = paste('t[',idx_mat[,1],idx_mat[,2],']',sep='')
-            rownames(similarity_list_mat) = paste('t[',1:dim(similarity_list_mat)[1],']',sep='')
-            sim_melt = melt(similarity_list_mat)
-            sim_melt$mod_i = paste('m[',rep(1:length(k), k*44),']',sep=)
+            #colnames(similarity_list_mat) = paste('t[',idx_mat[,1],idx_mat[,2],']',sep='')
+            #rownames(similarity_list_mat) = paste('t[',1:dim(similarity_list_mat)[1],']',sep='')
+            #sim_melt = melt(similarity_list_mat)
+            #sim_melt$mod_i = paste('m[',rep(1:length(k), k*44),']',sep=)
 
-            x_tick_lab = parse(text = levels(as.factor(sim_melt$Var2)))
-            y_tick_lab = parse(text = levels(as.factor(sim_melt$Var1)))
+            #x_tick_lab = parse(text = levels(as.factor(sim_melt$Var2)))
+            #y_tick_lab = parse(text = levels(as.factor(sim_melt$Var1)))
 
 
             for (i in 1:length(r@similarity_mat_list)){
@@ -37,7 +37,7 @@ setMethod("plot_visual_gen",
               #colnames(similarity_list_mat) = paste(1:dim(similarity_list_mat)[2])
               #rownames(similarity_list_mat) = paste(1:dim(similarity_list_mat)[1])
               #colnames(similarity_list_mat) = paste('t[',1:dim(similarity_list_mat)[2],']',sep='')
-              colnames(similarity_list_mat) = paste('t[',i,1:dim(similarity_list_mat)[2],']',sep='')
+              colnames(similarity_list_mat) = paste('t[',i,'*","*',1:dim(similarity_list_mat)[2],']',sep='')
               rownames(similarity_list_mat) = paste('t[',1:dim(similarity_list_mat)[1],']',sep='')
               sim_melt = melt(similarity_list_mat)
               #sim_melt$mod_i = rep(1:length(r@K), r@K*10)
@@ -50,7 +50,7 @@ setMethod("plot_visual_gen",
                 geom_text(aes(label=round(value, 2)), color='beige', size=2.5)+
                 ggtitle("topic similarities")+
                 #scale_fill_gradient2(low="white", high="black", midpoint = 0.1)+
-                scale_fill_continuous(low="#56B1F7", high="#132B43", guide = guide_legend(title = "proportion"))+
+                scale_fill_continuous(low="#56B1F7", high="#132B43", guide = guide_legend(title = "similarity"))+
                 scale_x_continuous(breaks=1:length(x_tick_lab),labels = rev(x_tick_lab), expand = c(0,0))+
                 scale_y_continuous(breaks = 1:length(y_tick_lab),
                                    labels = y_tick_lab,
@@ -74,7 +74,7 @@ setMethod("plot_visual_gen",
             r@model_topic_mat[[1]] = matrix(r@model_topic_mat[[1]])
             topic_doc_perc = do.call(cbind, r@model_topic_mat)
             #colnames(topic_doc_perc) = paste(0:(dim(topic_doc_perc)[2]-1))
-            colnames(topic_doc_perc) = paste('m[',0:(dim(topic_doc_perc)[2]-1),']',sep='')
+            colnames(topic_doc_perc) = paste('m[',0:(dim(topic_doc_perc)[2]-1),']','*","*','n','*"="*',c(r@K[r@idx], k),sep='')
             #rownames(topic_doc_perc) = paste(1:dim(topic_doc_perc)[1])
             rownames(topic_doc_perc) = paste('t[',1:dim(topic_doc_perc)[1],']',sep='')
             topic_doc_melt = melt(topic_doc_perc)
@@ -85,7 +85,7 @@ setMethod("plot_visual_gen",
             #dir.create("./Rep_images/Grimmer/topDoc/")
             myplot <- ggplot(topic_doc_melt, aes(x=as.numeric(as.factor(Var2)), y=as.numeric(as.factor(Var1))))+
               geom_tile(aes(fill=value), color='white')+
-              geom_text(aes(label=round(value, 2)), color='beige',size=3)+
+              geom_text(aes(label=round(value, 4)), color='beige',size=2)+
               ggtitle("Proportion of documents dominated by a topic from the original model")+
               #scale_fill_gradient2(low="white", high="black", midpoint = 0.1)+
               scale_fill_continuous(high = "#132B43", low = "#56B1F7", guide = guide_legend(title = "proportion"))+
@@ -107,7 +107,7 @@ setMethod("plot_visual_gen",
 
             # topic dom perc list (Prop of docs that have a topic0 as max class that also have as max class in a new model a topicX that maps to topic0)
             topic_dom = do.call(cbind, r@topic_dom_perc_list)
-            colnames(topic_dom) = paste('m[',1:dim(topic_dom)[2],']',sep='')
+            colnames(topic_dom) = paste('m[',1:dim(topic_dom)[2],'*","*','n','*"="*',k,']',sep='')
             rownames(topic_dom) = paste('t[',1:dim(topic_dom)[1],']',sep='')
             topic_dom_melt = melt(topic_dom)
 
