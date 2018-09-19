@@ -4,13 +4,17 @@
 \alias{plot_author_topic_cov}
 \title{plot_author_topic_cov}
 \usage{
-plot_author_topic_cov(r, dir, cluster_info, doc_covs)
+plot_author_topic_cov(r, dir, doc_covs, covs)
 }
 \arguments{
-\item{r}{a rlda object}
+\item{r}{An rlda object.}
 
-\item{dir}{directory to save plot}
+\item{dir}{Directory to save the resulting plot.}
+
+\item{doc_covs}{A dataset with author and/or document-level covariates. The dataset needs to be indexed exactly as the documents in the Document Term Matrix provided during fitting.}
+
+\item{covs}{A vector with the covariates to analayze: 5 covariates maximum.}
 }
 \description{
-compute clustering of topics across different models
+This function plots the bivariate relationship between a set of author and/or document-level covariates and the likelihood of a document to be about each of the topic clusters.
 }

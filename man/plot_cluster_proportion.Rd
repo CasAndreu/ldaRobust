@@ -12,5 +12,5 @@ plot_cluster_proportion(r, dir)
 \item{dir}{directory to save plot}
 }
 \description{
-compute clustering of topics across different models
+Plot showing proportion of documents about each topic-cluster.
 }

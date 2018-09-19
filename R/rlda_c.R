@@ -1,5 +1,7 @@
 #' rlda_c
-#' main class
+#'
+#' Main class
+#'
 #' methods: LDA wrapper, fit
 #'
 #'
@@ -18,7 +20,7 @@
 #' @slot lda_u lda object(in topicmodels)
 #' @slot K numeric or vector, if numeric, number of k to try, if vector, k's to try (will be overwrite with list of k's tried once fit has been run)
 #' @slot compute_parallel bool, if true, will parallel when fitting lda models; otherwise, sequential for fitting
-#' @slot same_k_estimation, integer, number of initial states to try, if 0, do not try with diff state
+#' @slot same_k_estimation integer, number of initial states to try, if 0, do not try with diff state
 #' @slot similarity_measure string, similarity measure (so far cosine or hellinger). Default: cosine
 #' @slot num_of_clusters numeric or vector, number of clusters used when performing spectral clustering
 #' @slot seed_list seeds tried (exists only when same_k_estimation is true)
@@ -33,24 +35,11 @@
 #' @slot dominant_topic_cluster_list clusters correponding to dominant topics of each document in each model
 #' @slot cluster_center_key_words_list (data_frame?) top 10 keywords for each center found by the cluster algorithn (so far only support spectral clustering)
 #' @slot perc_document_belong_cluster_list percentage of documents belong to a given cluster in a given model
-#' @slot topic_cluster_assignment cluster number a given topic belongs to
-#' @slot top_stability_mat
-#' @slot doc_by_cluster_and_model
+#' @slot topic_cluster_assignment cluster number a given topic belongs to d
+#' @slot top_stability_mat a matrix indicating whether each cluster is present in each alternative model
+#' @slot doc_by_cluster_and_model a matrix indicating the dominiant cluster of each document according to each topic model
 #' @exportClass rlda
-#'
-#'
-#'
-#'
-#'
-devtools::use_package("topicmodels")
-devtools::use_package("SnowballC")
-devtools::use_package("ggplot2")
-devtools::use_package("doParallel")
-devtools::use_package("kernlab")
-devtools::use_package("dplyr")
-devtools::use_package("tidyr")
-devtools::use_package("lme4")
-devtools::use_package("lsa")
+
 
 #setClassUnion("Nul_meric", c("numeric", "NULL"))
 #setClassUnion("Nul_DA", c("LDA", "NULL"))

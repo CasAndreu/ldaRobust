@@ -1,6 +1,6 @@
 #' get_cluster_matrix
 #'
-#' compute clustering of topics across different models
+#' Compute clustering of topics across different models
 #'
 #' @include compute_sim.R
 #' @param r a rlda object

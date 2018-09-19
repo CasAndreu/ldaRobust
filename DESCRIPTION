@@ -8,9 +8,16 @@ Depends: R (>= 3.4.1)
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.0.1.9000
+RoxygenNote: 6.1.0
 Imports: topicmodels,
-    SnowballC
+    SnowballC,
+    ggplot2,
+    doParallel,
+    kernlab,
+    dplyr,
+    tidyr,
+    lme4,
+    lsa
 Collate: 
     'rlda_c.R'
     'cluster_func.R'
@@ -18,10 +25,13 @@ Collate:
     'rlda_general.R'
     'compute_sim_general.R'
     'fit_rlda.R'
+    'get_cluster_matrix.R'
     'get_topic_in_doc.R'
     'get_topic_in_doc_general.R'
+    'or_topic_in_alt_plot.R'
+    'plot_author_topic_cov.R'
+    'plot_cluster_proportions.R'
+    'plot_sim.R'
+    'plot_topDoc.R'
     'plot_visual.R'
     'plot_visual_gen.R'
-    'test.R'
-    'util.R'
-    'visualize_res.R'

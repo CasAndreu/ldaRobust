@@ -12,5 +12,5 @@ get_cluster_matrix(r, sim_threshold)
 \item{sim_threshold}{similarity threshold}
 }
 \description{
-compute clustering of topics across different models
+Compute clustering of topics across different models
 }
