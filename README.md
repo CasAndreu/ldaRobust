@@ -92,12 +92,12 @@ r <- get_cluster_matrix(r, sim_threshold = 0.93)
 
 7. Explore whether the resulting topic clusters are present in all models.
 ```
-or_topic_in_alt_plot(r = r)
+or_topic_in_alt_plot(r = r, dir = "")
 ```
-![alt text](https://github.com/CasAndreu/ldaRobust/blob/master/images/topic_presence_41_47-STRICT.png)
+![alt text](https://github.com/CasAndreu/ldaRobust/blob/master/images/topic_presence_grimmer_sample_41_47_80phi.png)
 
 8. Explore the robust topic proportion (proportion of documents about each topic cluster)
 ```
-plot_cluster_proportion(r)
+plot_cluster_proportion(r, dir = "")
 ```
 ![alt text](https://github.com/CasAndreu/ldaRobust/blob/master/images/prop_docs_in_each_cluster_by_topic_41_47-STRICT.png)
