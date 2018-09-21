@@ -17,14 +17,13 @@ Eventually the package will be on CRAN... but for now, use the following instruc
 1. Download or Clone a copy of this `ldaRobust` repository-directory.
 Click on the green `Clone or download` button on the upper right corner of the page to get the cloning link or to download a zipped version of the repository.
 
-2. Make sure you have the following dependencies installed: `devtools` and `SnowballC`
-If you don't, you will have to install them in `R` by typing:
+2. Make sure you have `devtools` installed in order to download and install `ldaRobust` from GitHub.
+If you don't have it, type:
 ```
-install.packages("devtools")
 install.packages("SnowballC")
 ```
 
-2. Make sure to change the following directory to the parent directory of the ldaRobust folder on your machine.
+2. Make sure to change the working directory to the parent directory of the ldaRobust folder in your machine.
 For example, I have the `ldaRobust` directory in a `repos` directory in my Desktop. So in order to install the package I do:
 ```
 dir <- "/Users/andreucasas/Desktop/repos/"
@@ -34,31 +33,24 @@ devtools::install("ldaRobust")
 
 ## Short Example
 
-1. Load data (a sample of Congressional one-minute floor speeches from the 113th Congress)
+1. Load a document term matrix (DTM) that comes with the package: `grimmer_dtm.RData`. These are pre-processed press releases from U.S. Senators collected by Justin Grimmer, and they are part of the replication material for his article in the _American Journal of Political Science_: [Appropriators not Position Takers: The Distorting Effects of Electoral Incentives on Congressional Representation](https://onlinelibrary.wiley.com/doi/abs/10.1111/ajps.12000).
 ```
 setwd("./ldaRobust")
-data <- rjson::fromJSON(file = "data.json")
+print(load("./data/grimmer_dtm.RData)) # - this will load a dtm object named 'grimmer_dtm'
 ```
 
-2. Select a random sample of only 1,000 floor speeches to speed up computation in this example
+2. Select a random sample of only 1,000 press releases for this short example. To run the code for the entire corpus takes much longer.
 ```
 set.seed(123) # - we set the seed so we can get reproducible results
-data <- data[sample(x = 1:length(data), size = 1000, replace = FALSE)]
+data <- grimmer_dtm[sample(x = 1:nrow(grimmer_dtm), size = 1000, replace = FALSE), ]
 ```
 
-3. Transform the documents in this sample dataset to a Document Term Matrix. We use the `tm` package for the DTM conversion.
+3. Run a first original LDA model with 44 topics.
 ```
-df<- plyr::ldply(data, data.frame)
-x = tm::SimpleCorpus(tm::VectorSource(df$speech), control=list(language ="en"))
-dtm = tm::DocumentTermMatrix(x, control=list(language="en",removePunctuation=TRUE, stopwords=TRUE, removeNumbers=TRUE,stemming=TRUE, tolower=TRUE))
+lda = topicmodels::LDA(data, 44)
 ```
 
-4. Run a first original LDA model with 10 topics.
-```
-lda = topicmodels::LDA(dtm, 10)
-```
-
-Run the following code to take a look at the 10 most predictive features of each topic.
+Run the following code to take a look at the 10 most predictive features of each of the 44 topics.
 ```
 library(dplyr) # - install dplyr if you don't have it
 original_lda_predictive_features <- sapply(1:nrow(lda@beta), function(i)
@@ -68,7 +60,8 @@ original_lda_predictive_features <- sapply(1:nrow(lda@beta), function(i)
 print(original_lda_predictive_features)
 ```
 You should see the following output with the most predictive keywords of each topic.
-![alt text](https://github.com/CasAndreu/ldaRobust/blob/master/images/orginal_mod_feature.png)
+![alt text](https://github.com/CasAndreu/ldaRobust/blob/master/images/grimmer_example_top_features_01.png)
+![alt text](https://github.com/CasAndreu/ldaRobust/blob/master/images/grimmer_example_top_features_02.png)
 
 5. Create an `rlda` object that will contain all the information we will generate. We are specifying the following parameters:
   - `dtm` = your Document Term Document matrix.
