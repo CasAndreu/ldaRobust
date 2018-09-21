@@ -94,4 +94,4 @@ r <- get_cluster_matrix(r, sim_threshold = 0.93)
 ```
 r <- plot_cluster_proportion(r)
 ```
-![alt text](https://github.com/CasAndreu/ldaRobust/blob/master/images/topic_presence_41_47-STRICT.pdf)
+![alt text](https://github.com/CasAndreu/ldaRobust/blob/master/images/topic_presence_41_47-STRICT.png)
