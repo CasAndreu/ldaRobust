@@ -100,4 +100,4 @@ or_topic_in_alt_plot(r = r, dir = "")
 ```
 plot_cluster_proportion(r, dir = "")
 ```
-![alt text](https://github.com/CasAndreu/ldaRobust/blob/master/images/prop_docs_in_each_cluster_by_topic_41_47-STRICT.png)
+![alt text](https://github.com/CasAndreu/ldaRobust/blob/master/images/prop_docs_in_each_cluster_by_topic_grimmer_sample_41_47.png)
