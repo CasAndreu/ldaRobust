@@ -25,6 +25,7 @@ setMethod("fit",
             K = r@K
             same_k_estimation = r@same_k_estimation
             terms_u = LDA_u@terms
+            other_dtms = r@other_dtms
 
             # initialize list of k to try and run lda on all
             if (length(K) == 1){
@@ -68,8 +69,17 @@ setMethod("fit",
               }
             }
 
+            # try with other dtms
+            if(length(other_dtms) > 0)
+            {
+             lda_list1 = lda_wrapper_dtm(other_dtms, LDA_u@k, LDA_u@control)
+             lda_list = c(lda_list1, lda_list)
+            }
+
             # if need to try with different seeds
-            if (same_k_estimation){
+            if (length(same_k_estimation) > 1 | same_k_estimation){
+              if(length(same_k_estimation) == 1)
+              {
               if(same_k_estimation > 5)
                 stop("Number of initial states to try should be less than 5")
               set.seed(NULL)
@@ -78,6 +88,12 @@ setMethod("fit",
               lda_list2 = lda_wrapper_init(dtm, seeds,LDA_u@k,LDA_u@control)
               lda_list = c(lda_list2, lda_list)
               #save seed list, run lda
+              }
+              else
+              {
+                lda_list2 = lda_wrapper_init(dtm, same_k_estimation,LDA_u@k,LDA_u@control)
+                lda_list = c(lda_list2, lda_list)
+              }
             }
 
             feature_list[[1]] = apply(LDA_u@beta, 1, function(x){terms_u[order(x, decreasing = TRUE)][1:10]})
@@ -111,6 +127,15 @@ lda_wrapper_k <- function(dtm, list_of_k, control_list){
   lda_l = NULL
   for (k in list_of_k){
     lda_k=topicmodels::LDA(dtm, k, control = control_list)
+    lda_l=c(lda_l, lda_k)
+  }
+  return(lda_l)
+}
+
+lda_wrapper_dtm <- function(list_of_dtms, k, control_list){
+  lda_l = NULL
+  for (other_dtm in list_of_dtms){
+    lda_k=topicmodels::LDA(other_dtm, k, control = control_list)
     lda_l=c(lda_l, lda_k)
   }
   return(lda_l)

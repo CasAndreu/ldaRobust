@@ -34,62 +34,63 @@ setMethod("plot_author_topic_cov",
             orig_altern_models_k_list <- c(r@lda_u@k, r@K)
             cluster_mat <- r@topic_cluster_assignment
             cluster_top_features <- r@cluster_center_key_words_list
+            docs_by_cluster_and_model <- r@docs_by_cluster_and_model
 
             # - check if the `@doc_by_cluster_and_model` slot is empty; if so,
             #   create it.
-            if (is.null(r@docs_by_cluster_and_model) |
-                (nrow(r@docs_by_cluster_and_model) == 0 &
-                 ncol(r@docs_by_cluster_and_model) == 0)) {
-              docs_by_cluster_and_model <- as.data.frame(matrix(
-                nrow = nrow(r@dtm),
-                ncol = length(orig_altern_models_k_list)))
-              colnames(docs_by_cluster_and_model) <- paste0("model_k_", orig_altern_models_k_list)
-
-              # - adding now the information about into which cluster each
-              #   document has beenclassified
-              i <- 0
-              # ... iterate through model K's
-              for (m in orig_altern_models_k_list) {
-                # - pull the doc-topic gamma matrix for this model
-                if (m == r@lda_u@k) {
-                  gamma_mat <- r@lda_u@gamma
-                } else {
-                  gamma_mat <- r@gamma_list[[which(r@K == m)]]
-                }
-                # - pull doc-topic assignment from gamm matrix
-                doc_topic <- data.frame(
-                  model_topic = sapply(1:nrow(gamma_mat), function(j)
-                    which(gamma_mat[j,] == max(gamma_mat[j,])))
-                )
-
-                # - find out the index of the first and last topic-cluster assignment for this
-                #   model
-                start_i <- i + 1
-                end_i <- (start_i + m - 1)
-                model_label <- paste0("model_k_", m)
-
-                # - pull this model's topic-cluster assignment, and merge with doc-topic
-                #   assignment in order to see into which cluster the doc got classified into
-                topic_cluster <- data.frame(
-                  model_topic = 1:m,
-                  cluster = cluster_mat[start_i:end_i]
-                )
-                doc_cluster <- suppressMessages(
-                  left_join(doc_topic, topic_cluster))
-
-                # - add this data to the out-of-the-loop output df
-                docs_by_cluster_and_model[,model_label] <- doc_cluster$cluster
-
-                # - update the index that indicates the start of the topic-cluster assignments
-                i <- end_i
-              }
-
-              # - adding this information into the `docs_by_cluster_and_model`
-              #   @slot
-              r@docs_by_cluster_and_model <- docs_by_cluster_and_model
-            } else {
-              docs_by_cluster_and_model <- r@docs_by_cluster_and_model
-            }
+            # if (is.null(r@docs_by_cluster_and_model) |
+            #     (nrow(r@docs_by_cluster_and_model) == 0 &
+            #      ncol(r@docs_by_cluster_and_model) == 0)) {
+            #   docs_by_cluster_and_model <- as.data.frame(matrix(
+            #     nrow = nrow(r@dtm),
+            #     ncol = length(orig_altern_models_k_list)))
+            #   colnames(docs_by_cluster_and_model) <- paste0("model_k_", orig_altern_models_k_list)
+            #
+            #   # - adding now the information about into which cluster each
+            #   #   document has beenclassified
+            #   i <- 0
+            #   # ... iterate through model K's
+            #   for (m in orig_altern_models_k_list) {
+            #     # - pull the doc-topic gamma matrix for this model
+            #     if (m == r@lda_u@k) {
+            #       gamma_mat <- r@lda_u@gamma
+            #     } else {
+            #       gamma_mat <- r@gamma_list[[which(r@K == m)]]
+            #     }
+            #     # - pull doc-topic assignment from gamm matrix
+            #     doc_topic <- data.frame(
+            #       model_topic = sapply(1:nrow(gamma_mat), function(j)
+            #         which(gamma_mat[j,] == max(gamma_mat[j,])))
+            #     )
+            #
+            #     # - find out the index of the first and last topic-cluster assignment for this
+            #     #   model
+            #     start_i <- i + 1
+            #     end_i <- (start_i + m - 1)
+            #     model_label <- paste0("model_k_", m)
+            #
+            #     # - pull this model's topic-cluster assignment, and merge with doc-topic
+            #     #   assignment in order to see into which cluster the doc got classified into
+            #     topic_cluster <- data.frame(
+            #       model_topic = 1:m,
+            #       cluster = cluster_mat[start_i:end_i]
+            #     )
+            #     doc_cluster <- suppressMessages(
+            #       left_join(doc_topic, topic_cluster))
+            #
+            #     # - add this data to the out-of-the-loop output df
+            #     docs_by_cluster_and_model[,model_label] <- doc_cluster$cluster
+            #
+            #     # - update the index that indicates the start of the topic-cluster assignments
+            #     i <- end_i
+            #   }
+            #
+            #   # - adding this information into the `docs_by_cluster_and_model`
+            #   #   @slot
+            #   r@docs_by_cluster_and_model <- docs_by_cluster_and_model
+            # } else {
+            #   docs_by_cluster_and_model <- r@docs_by_cluster_and_model
+            # }
 
             # - a subset of the covariate dataset including only the provided
             #   covariates
