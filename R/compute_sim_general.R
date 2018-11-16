@@ -35,7 +35,7 @@ setMethod("compute_sim_general",
             sim_mat_list = list()
             feature_list = list()
             i = 0
-            j = 0
+            j = 1
             feature_list[[1]] = apply(r@beta_list[[r@idx]], 1, function(x){r@terms[order(x, decreasing = TRUE)][1:10]})
             for( i in 1:length(r@K) )
             {
