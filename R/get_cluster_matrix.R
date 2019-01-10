@@ -12,9 +12,9 @@ setGeneric("get_cluster_matrix", function(r, sim_threshold)standardGeneric("get_
 setMethod("get_cluster_matrix",
           signature(r = "rlda", sim_threshold = "numeric"),
           function (r, sim_threshold) {
-            k_list <- c(r@lda_u@k, r@K)
-            beta_mat <- r@lda_u@beta
-            for (topic_model_i in 1:length(r@beta_list)) {
+            k_list <- r@K
+            beta_mat <- r@beta_list[[1]]
+            for (topic_model_i in 2:length(r@beta_list)) {
               beta_mat <- rbind(beta_mat, r@beta_list[[topic_model_i]])
             }
             #sim_mat <- get_sim_matrix(beta_mat)
@@ -30,7 +30,7 @@ setMethod("get_cluster_matrix",
             r@cluster_center_key_words_list <- cluster_top_features
 
             # get top_stability_mat
-            k_list <- c(r@lda_u@k, r@K)
+            #k_list <- c(r@lda_u@k, r@K)
             or_topics_alt_models_mat <- as.data.frame(matrix(nrow = k_list[1],
                                                              ncol = (length(k_list)-1)))
 
@@ -106,7 +106,7 @@ setMethod("get_cluster_matrix",
 
             # Add the information about each topic-cluster top features
             # ... naming the alternative models
-            names(top_stability_mat) <- paste0("k_", k_list[2:length(k_list)])
+            names(top_stability_mat) <- paste0(paste0("k_", k_list[2:length(k_list)]), r@model_type[2:length(k_list)])
             # ... top features
             top_stability_mat$top_features <- cluster_top_features$top_features
             # ... numbering the clusters
@@ -120,19 +120,23 @@ setMethod("get_cluster_matrix",
             docs_by_cluster_and_model <- as.data.frame(matrix(
               nrow = nrow(r@dtm),
               ncol = length(k_list)))
-            colnames(docs_by_cluster_and_model) <- paste0("model_k_", k_list)
+            colnames(docs_by_cluster_and_model) <- paste0(paste0("model_k_", k_list), r@model_type)
 
             # - adding now the information about into which cluster each
             #   document has beenclassified
             i <- 0
             # ... iterate through model K's
-            for (m in k_list) {
+            for (idx in 1:length(k_list)) {
               # - pull the doc-topic gamma matrix for this model
-              if (m == r@lda_u@k) {
-                gamma_mat <- r@lda_u@gamma
-              } else {
-                gamma_mat <- r@gamma_list[[which(r@K == m)]]
-              }
+              m = k_list[idx]
+              gamma_mat <- r@gamma_list[[idx]]
+              #if (idx == 1) {
+              #  gamma_mat <- r@lda_u@gamma
+              #}
+              #else
+              #{
+              #  gamma_mat <- r@gamma_list[[idx-1]]
+              #}
               # - pull doc-topic assignment from gamm matrix
               doc_topic <- data.frame(
                 model_topic = sapply(1:nrow(gamma_mat), function(j)
@@ -143,7 +147,8 @@ setMethod("get_cluster_matrix",
               #   model
               start_i <- i + 1
               end_i <- (start_i + m - 1)
-              model_label <- paste0("model_k_", m)
+              model_label <- paste0(paste0("model_k_", m), r@model_type[idx])
+              print(model_label)
 
               # - pull this model's topic-cluster assignment, and merge with doc-topic
               #   assignment in order to see into which cluster the doc got classified into
@@ -295,8 +300,13 @@ get_cluster_matrix_sub <- function(sim_mat, k_list, sim_threshold) {
 get_cluster_top_features <- function(cluster_mat, beta_mat, k_list, rlda_obj,
                                      n = 6) {
   # - labeling the columns(features) of the beta matrix
+  ## change vals=0 to min
+  min_val = min(beta_mat)
+  zero_idx = (beta_mat == 0)
+  beta_mat[zero_idx] = min_val-1
+
   beta_df <- as.data.frame(beta_mat)
-  colnames(beta_df) <- rlda_obj@dtm$dimnames$Terms
+  colnames(beta_df) <- rlda_obj@terms
 
   # - initializing output
   out <- as.data.frame(matrix(nrow = max(cluster_mat[,1]), ncol = 2))

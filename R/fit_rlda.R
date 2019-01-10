@@ -60,7 +60,7 @@ setMethod("fit",
               else{
                 lda_list = lda_wrapper_k(dtm, k_list,LDA_u@control)
               }
-              r@K = k_list
+              #r@K = k_list
               model_type = rep("diff_K", length(k_list))
               }
             }
@@ -82,10 +82,12 @@ setMethod("fit",
              if (is.null(lda_list)){
                lda_list = lda_list1
                model_type = rep("diff_dtm", length(other_dtms))
+               k_list = rep(LDA_u@K, length(other_dtms))
              }
              else{
              lda_list = c(lda_list1, lda_list)
              model_type = c(rep("diff_dtm", length(other_dtms)), model_type)
+             k_list = c(rep(LDA_u@K, length(other_dtms)),k_list)
              }
             }
 
@@ -103,10 +105,12 @@ setMethod("fit",
               if (is.null(lda_list)){
                 lda_list = lda_list2
                 model_type = rep("diff_seed", length(seeds))
+                k_list = rep(LDA_u@K, length(seeds))
               }
               else{
                 lda_list = c(lda_list2, lda_list)
                 model_type = c(rep("diff_seed", length(seeds)), model_type)
+                k_list = c(rep(LDA_u@K, length(seeds)),k_list)
               }
               #save seed list, run lda
               }
@@ -116,10 +120,12 @@ setMethod("fit",
                 if (is.null(lda_list)){
                   lda_list = lda_list2
                   model_type = rep("diff_seed", length(same_k_estimation))
+                  k_list = rep(LDA_u@K, length(same_k_estimation))
                 }
                 else{
                   lda_list = c(lda_list2, lda_list)
                   model_type = c(rep("diff_seed", length(same_k_estimation)), model_type)
+                  k_list = c(rep(LDA_u@K, length(same_k_estimation)),k_list)
                 }
               }
             }
@@ -150,17 +156,25 @@ setMethod("fit",
               gamma_list[[i]] = mod@gamma
             }
 
+            # add new terms and union terms
+            new_beta_tuple = union_terms(terms_u, LDA_u@beta, other_dtms, beta_list, mod_type)
+
+            beta_list = new_beta_tuple[[1]]
+            new_terms = new_beta_tuple[[2]]
             #return (need to add seed list!!!!)
 
             #overwrite K?
             r@key_features = feature_list
             r@beta_list = beta_list
-            r@gamma_list = gamma_list
+            r@gamma_list = c(LDA_u@gamma, gamma_list)
+            r@model_type = c("or", model_type)
+            r@K = c(LDA_u@K, k_list)
             return(r)
 
           }
 )
 
+# utility functions
 lda_wrapper_k <- function(dtm, list_of_k, control_list){
   lda_l = NULL
   for (k in list_of_k){
@@ -205,4 +219,40 @@ lda_wrapper_k_para <- function(dtm, list_of_k, control_list){
   parallel::stopCluster(cl)
   return(lda_l)
 }
+
+
+# utility functions for other dtms
+union_terms <- function(dtm_terms, or_beta, list_of_dtms, beta_list, mod_type)
+{
+  # get union of terms
+  list_of_dtm_terms = lapply(list_of_dtms, function(x) x$dimnames$Terms)
+  list_of_dtm_terms[[length(list_of_dtms) + 1]] = dtm_terms
+  all_terms = purrr::reduce(list_of_dtm_terms, function(x,y) union(x,y))
+
+  additional_cols = matrix(0, nrow(or_beta), length(all_terms) - length(dtm_terms))
+  term_order = c(dtm_terms, setdiff(all_terms, dtm_terms))
+  or_beta = cbind(or_beta, additional_cols)
+  dtm_ct = 1
+  new_beta_list = list()
+  for(i in 1:length(beta_list))
+  {
+    if(mod_type[i] == "diff_dtm")
+    {
+      alt_dtm_terms = list_of_dtm_terms[[dtm_ct]]
+      new_words = setdiff(all_terms, alt_dtm_terms)
+      sort_idx = match(term_order, c(alt_dtm_terms, new_words))
+      additional_col_dtm = matrix(0, nrow(beta_list[[i]]), length(new_words))
+      new_beta = cbind(beta_list[[i]], additional_col_dtm)[,sort_idx]
+      new_beta_list[[i]] = new_beta
+      dtm_ct = dtm_ct+1
+    }
+    else
+    {
+      additional_col_mat = matrix(0, nrow(beta_list[[i]]), length(all_terms) - length(dtm_terms))
+      new_beta_list[[i]] = cbind(beta_list[[i]], additional_col_mat)
+    }
+  }
+  return(list(c(or_beta, new_beta_list),term_order))
+}
+
 

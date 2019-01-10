@@ -20,7 +20,7 @@ setMethod("plot_cluster_proportion",
             }
 
             # - pulling from the rlda object some of the information we'll need
-            orig_altern_models_k_list <- c(r@lda_u@k, r@K)
+            orig_altern_models_k_list <- r@K
             cluster_mat <- r@topic_cluster_assignment
             cluster_top_features <- r@cluster_center_key_words_list
             top_stability_mat <- r@top_stability_mat
@@ -85,7 +85,7 @@ setMethod("plot_cluster_proportion",
             prop_doc_by_cluster_and_model <- NULL
             for (cluster in unique(cluster_mat[,1])) {
               # - iterate though models
-              for (model in paste0("model_k_", orig_altern_models_k_list)) {
+              for (model in paste0(paste0("model_k_", orig_altern_models_k_list), r@model_type)) {
                 # - pull the proportion of message about this topic/cluster in this model
                 if (length(
                   which(docs_by_cluster_and_model[,model] == cluster)) > 0) {

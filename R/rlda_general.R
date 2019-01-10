@@ -14,7 +14,6 @@
 #' @slot dtm document term matrix
 #' @slot idx index in K for the model that should be treated as the original model
 #' @slot K numeric or vector, if numeric, number of k to try, if vector, k's to try (will be overwrite with list of k's tried once fit has been run)
-#' @slot threshold, sim_threshold, threshold for return2, between [0,1]
 #' @slot similarity_measure string, similarity measure (so far cosine or hellinger). Default: cosine
 #' @slot num_of_clusters numeric or vector, number of clusters used when performing spectral clustering
 #' @slot beta_list list of beta matrices in LDA objects of all K tried (ordered same as K)
@@ -40,7 +39,9 @@ setClass("rlda_general",
          representation(dtm="DocumentTermMatrix",
                         idx = "numeric",
                         K = "numeric",
-                        threshold="numeric",
+                        #threshold="numeric",
+                        model_type = "character",
+                        other_dtms = "list",
                         similarity_measure="character",
                         num_of_clusters = "numeric",
                         seed_list = "numeric", #?????,
@@ -56,10 +57,11 @@ setClass("rlda_general",
                         key_features = "list",
                         cluster_center_key_words_list = "list",
                         perc_document_belong_cluster_list = "list",
-                        topic_cluster_assignment = "list"
+                        topic_cluster_assignment = "list",
+                        top_stability_mat = "data.frame",
+                        docs_by_cluster_and_model = "data.frame"
          ),
          prototype(K=5,
-                   threshold=0.5,
                    similarity_measure="cosine"
                    #seed_list = NULL,
                    #model_list = NULL,
