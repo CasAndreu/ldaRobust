@@ -1,21 +1,18 @@
-#' plot_cluster_proportions
+#' plot_cluster_proportions_general
 #'
 #' Plot showing proportion of documents about each topic-cluster.
 #'
-#' @param r a rlda object
+#' @param r a rlda_general object
 #' @param dir directory to save plot
-#' @exportMethod plot_cluster_proportion
-#'
+#' @exportMethod plot_cluster_proportion_general
 #'
 
-setGeneric("plot_cluster_proportion", function(r, dir)standardGeneric("plot_cluster_proportion"))
-setMethod("plot_cluster_proportion",
-          signature(r = "rlda", dir = "character"),
+setGeneric("plot_cluster_proportion_general", function(r, dir)standardGeneric("plot_cluster_proportion_general"))
+setMethod("plot_cluster_proportion_general",
+          signature(r = "rlda_general", dir = "character"),
           function (r, dir) {
             # - making sure the user has already run the 'get_cluster_matrix'
             #   function in order to get the topic clusters
-            usethis::use_package("weights")
-            usethis::use_package("Hmisc")
             if (is.null(r@topic_cluster_assignment) |
                 (nrow(r@topic_cluster_assignment) == 0 &
                  ncol(r@topic_cluster_assignment) == 0)) {
@@ -131,7 +128,7 @@ setMethod("plot_cluster_proportion",
               mutate(model = as.character(paste0("model_", model)))
             prop_doc_by_cluster_and_model$model <- as.character(prop_doc_by_cluster_and_model$model)
             prop_doc_by_cluster_and_model <- left_join(prop_doc_by_cluster_and_model,
-                                                   weights_tomerge)
+                                                       weights_tomerge)
             prop_doc_by_cluster_and_model$weight[is.na(
               prop_doc_by_cluster_and_model$weight
             )] <- 1 # this are the results of the original model: should receive full weight
@@ -214,7 +211,7 @@ setMethod("plot_cluster_proportion",
             )
 
             ggplot2::ggplot(prop_doc_by_cluster_and_model,
-                   aes(x = as.numeric(label), y = prop)) +
+                            aes(x = as.numeric(label), y = prop)) +
               geom_segment(inherit.aes = FALSE,
                            data = docs_by_cluster,
                            aes(x = as.numeric(label) - 0.15, xend = as.numeric(label) - 0.15,

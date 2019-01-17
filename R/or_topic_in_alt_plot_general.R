@@ -1,15 +1,15 @@
-#' or_topic_in_alt_plot
+#' or_topic_in_alt_plot_general
 #'
 #' compute clustering of topics across different models
 #'
-#' @param r a rlda object
+#' @param r a rlda_general object
 #' @param dir directory to save plot
-#' @exportMethod or_topic_in_alt_plot
+#' @exportMethod or_topic_in_alt_plot_general
 #'
 
-setGeneric("or_topic_in_alt_plot", function(r, dir)standardGeneric("or_topic_in_alt_plot"))
-setMethod("or_topic_in_alt_plot",
-          signature(r = "rlda", dir = "character"),
+setGeneric("or_topic_in_alt_plot_general", function(r, dir)standardGeneric("or_topic_in_alt_plot_general"))
+setMethod("or_topic_in_alt_plot_general",
+          signature(r = "rlda_general", dir = "character"),
           function (r, dir) {
             # [ D ] VISUALIZING WHICH ORIGINAL TOPICS IN ALTERNATIVE MODELS, and viscversa
             #-------------------------------------------------------------------------------

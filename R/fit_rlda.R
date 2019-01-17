@@ -157,7 +157,10 @@ setMethod("fit",
             }
 
             # add new terms and union terms
-            new_beta_tuple = union_terms(terms_u, LDA_u@beta, other_dtms, beta_list, mod_type)
+            if(length(other_dtms) > 0)
+            {
+              new_beta_tuple = union_terms(terms_u, LDA_u@beta, other_dtms, beta_list, mod_type)
+            }
 
             beta_list = new_beta_tuple[[1]]
             new_terms = new_beta_tuple[[2]]

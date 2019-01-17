@@ -16,6 +16,8 @@
 #' @import lsa
 #' @importClassesFrom topicmodels LDA
 #' @import tm
+#' @import Hmisc
+#' @import weights
 #' @slot  dtm document term matrix
 #' @slot lda_u lda object(in topicmodels)
 #' @slot K numeric or vector, if numeric, number of k to try, if vector, k's to try (will be overwrite with list of k's tried once fit has been run)
@@ -43,6 +45,9 @@
 
 #setClassUnion("Nul_meric", c("numeric", "NULL"))
 #setClassUnion("Nul_DA", c("LDA", "NULL"))
+#devtools::use_package("weights")
+#devtools::use_package("Hmisc")
+
 
 setClass("rlda",
          representation(dtm="DocumentTermMatrix",

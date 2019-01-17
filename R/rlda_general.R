@@ -17,7 +17,7 @@
 #' @slot similarity_measure string, similarity measure (so far cosine or hellinger). Default: cosine
 #' @slot num_of_clusters numeric or vector, number of clusters used when performing spectral clustering
 #' @slot beta_list list of beta matrices in LDA objects of all K tried (ordered same as K)
-#' @slot gamma_list list of gamma matrices in LDA objects of all K tried (ordered same as K)
+#' @slot gamma_list list of gamma matrices in LDA objects of all K tried (ordered same as K), ASSUME ORIGINAL IS THE FIRST ONE
 #' @slot terms list of unique words/token in the vocabulary
 #' @slot model_topic_mat percentage of documents dominated by the given topic
 #' @slot similarity_mat maximum similarity (given choice of similarity functions) of a given topic compare to any topics in the original lda model (to give the probability of a user’s topic shows up in a tried model’s resulting topics)
