@@ -57,7 +57,7 @@ setClass("rlda_general",
                         key_features = "list",
                         cluster_center_key_words_list = "list",
                         perc_document_belong_cluster_list = "list",
-                        topic_cluster_assignment = "list",
+                        topic_cluster_assignment = "matrix",
                         top_stability_mat = "data.frame",
                         docs_by_cluster_and_model = "data.frame"
          ),
@@ -70,3 +70,4 @@ setClass("rlda_general",
                    #similarity_mat_list = NULL
                    )
 )
+

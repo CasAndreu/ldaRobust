@@ -16,7 +16,7 @@ setMethod("set_up_general",
               stop("must have a nonempty beta list")
             }
 
-            if(length(r@model_typ) == 0)
+            if(length(r@model_type) == 0)
             {
               stop("must have a nonempty model_type list")
             }
@@ -37,7 +37,7 @@ setMethod("set_up_general",
             for( i in 1:length(r@K) )
             {
               j=j+1
-              if (model_type == "or")
+              if (model_type[i] == "or")
               {
                 j = j-1
                 next
@@ -56,11 +56,14 @@ setMethod("set_up_general",
               }
             }
 
-            new_beta_tuple = union_terms(terms_u, r@idx, other_dtms, beta_list, model_type)
+            if (length(other_dtms) > 0)
+            {
+              new_beta_tuple = union_terms(terms_u, r@idx, other_dtms, beta_list, model_type)
+              r@beta_list = new_beta_tuple[[1]]
+              r@terms = new_beta_tuple[[2]]
+            }
 
             r@key_features = feature_list
-            r@terms = new_beta_tuple[[2]]
-            r@beta_list = new_beta_tuple[[1]]
             return(r)
 
           })

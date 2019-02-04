@@ -4,7 +4,7 @@
 #'
 #' @include rlda_c.R
 #' @param r a rlda object
-#' @exportMethod "fit"
+#' @exportMethod fit
 #'
 #'
 
@@ -160,18 +160,17 @@ setMethod("fit",
             if(length(other_dtms) > 0)
             {
               new_beta_tuple = union_terms(terms_u, LDA_u@beta, other_dtms, beta_list, mod_type)
+              beta_list = new_beta_tuple[[1]]
+              new_terms = new_beta_tuple[[2]]
             }
-
-            beta_list = new_beta_tuple[[1]]
-            new_terms = new_beta_tuple[[2]]
             #return (need to add seed list!!!!)
 
             #overwrite K?
             r@key_features = feature_list
-            r@beta_list = beta_list
-            r@gamma_list = c(LDA_u@gamma, gamma_list)
+            r@beta_list = c(list(LDA_u@beta),beta_list)
+            r@gamma_list = c(list(LDA_u@gamma), gamma_list)
             r@model_type = c("or", model_type)
-            r@K = c(LDA_u@K, k_list)
+            r@K = c(LDA_u@k, k_list)
             return(r)
 
           }
@@ -255,7 +254,7 @@ union_terms <- function(dtm_terms, or_beta, list_of_dtms, beta_list, mod_type)
       new_beta_list[[i]] = cbind(beta_list[[i]], additional_col_mat)
     }
   }
-  return(list(c(or_beta, new_beta_list),term_order))
+  return(list(new_beta_list,term_order))
 }
 
 
