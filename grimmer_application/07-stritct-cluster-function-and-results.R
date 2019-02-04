@@ -902,6 +902,9 @@ dev.off()
 # - estimating a separate logistic regression for each cluster, topic model, and
 #   covaraite; predicting the probability of a topic being about that topic as a
 #   function of the covariate
+doc_data = doc_data %>%
+  mutate(party = ifelse(party == 1, "Democrat", "Republican"))
+
 
 # ... basic needed objects/lists
 output <- NULL
@@ -914,6 +917,9 @@ Y <- doc_data[,which(grepl("model_k_", names(doc_data)))]
 
 # ... covariates of interest
 X <- doc_data[,cov_list]
+
+# ... categorical variables
+cat_covs <- c("party")
 
 # - iterate through clusters
 cluster_counter <- 0
@@ -931,122 +937,252 @@ for (cluster in cluster_list) {
     cov_counter <- cov_counter + 1
     print(paste0("... Covariate [", cov_counter, "/", cov_total, "]"))
 
-    # - iterate through topic models
-    all_diffs <- NULL
-    all_weights <- NULL
-    topmodel_counter <- 0
-    topmodel_total <- length(topmodel_list)
-    for (topmodel in topmodel_list) {
-      topmodel_counter <- topmodel_counter + 1
-      print(paste0("... ... topic-model [", topmodel_counter, "/", topmodel_total, "]"))
-      # - replace the values in this model's column in the copy of the outcome
-      #   matrix with 0s and 1s
-      y <- Y_c[,topmodel]
-      y[which(y == cluster)] <- -1
-      y[which(y != cluster & y != -1)] <- -2
-      y <- ifelse(y == -1, 1, 0)
+    # - check if it's a categorical variable
+    if (covariate %in% cat_covs) {
+      # - make sure it's categorical in the data frame
+      X[,covariate] <- factor(X[,covariate])
 
-      model_data <- data.frame(
-        y = y,
-        x = X[,covariate]
-      )
+      # - check what's the reference category/class
+      all_cats <- levels(X[,covariate])
+      ref_cat <- all_cats[1]
+      other_cats <- all_cats[2:length(all_cats)]
 
-      # - if a topic model DOES NOT HAVE THE TOPIC CLUSTER, don't run the
-      #   statistical model. At this stage we are not interesting in learning
-      #   whether the topic is present but the kind of author features that are
-      #   related to the probility of discussing the topic cluster when this IS
-      #   present.
-      if (length(which(y == 1)) > 0) {
-        if (nrow(table(model_data$y)) > 1) {
-          # - estimate a bivariate logistic regression
-          model <- glm(y ~ x, data = model_data, family = "binomial")
+      # - iterate through non-reference category and calculate marginal effects
+      for (ocat in other_cats) {
+        all_diffs <- NULL
+        all_weights <- NULL
+        topmodel_counter <- 0
+        topmodel_total <- length(topmodel_list)
+        for (topmodel in topmodel_list) {
+          topmodel_counter <- topmodel_counter + 1
+          print(paste0("... ... topic-model [", topmodel_counter, "/", topmodel_total, "]"))
+          # - replace the values in this model's column in the copy of the outcome
+          #   matrix with 0s and 1s
+          y <- Y_c[,topmodel]
+          y[which(y == cluster)] <- -1
+          y[which(y != cluster & y != -1)] <- -2
+          y <- ifelse(y == -1, 1, 0)
 
-          # - calculate marginal effect when going from minimum to maximum value
+          model_data <- data.frame(
+            y = y,
+            x = factor(X[,covariate])
+          )
 
-          # ... pull model parameters and simulate 1000 betas
-          pe <- coef(model)
-          vc <- vcov(model)
-          se <- sqrt(diag(vc))
+          # - if a topic model DOES NOT HAVE THE TOPIC CLUSTER, don't run the
+          #   statistical model. At this stage we are not interesting in learning
+          #   whether the topic is present but the kind of author features that are
+          #   related to the probility of discussing the topic cluster when this IS
+          #   present.
+          if (length(which(y == 1)) > 0) {
+            if (nrow(table(model_data$y)) > 1) {
+              # - estimate a bivariate logistic regression
+              model <- glm(y ~ x, data = model_data, family = "binomial")
 
-          sims <- 1000
-          simbetas <- MASS::mvrnorm(sims, pe, vc)
+              # - calculate marginal effect when going from minimum to maximum value
 
-          # - create two scenarios: one where the value for the covariate of
-          #   interest is at its minimum value, and another one at its maximum
-          min_scen <- c(1, as.numeric(min(X[,covariate]))) #... 1 for the interecept
-          max_scen <- c(1, as.numeric(max(X[,covariate])))
+              # ... pull model parameters and simulate 1000 betas
+              pe <- coef(model)
+              vc <- vcov(model)
+              se <- sqrt(diag(vc))
 
-          # - predict the Pr in each scenario to discuss this cluster/topic
-          yhats_min <- exp(min_scen %*% t(simbetas))
-          yhats_max <- exp(max_scen %*% t(simbetas))
+              sims <- 1000
+              simbetas <- MASS::mvrnorm(sims, pe, vc)
 
-          # - calculate the difference between max and min predicted values
-          diff <- yhats_max - yhats_min
-        } else {
-          diff <- NULL
+              # - create two scenarios: one where the value for the covariate of
+              #   interest is at its minimum value, and another one at its maximum
+              min_scen_pre <- data.frame(intercept = 1, cov = factor(
+                ref_cat, levels = all_cats))
+              max_scen_pre <- data.frame(intercept = 1, cov = factor(
+                ocat, levels = all_cats))
+              min_scen <- model.matrix(~cov, data = min_scen_pre)
+              max_scen <- model.matrix(~cov, data = max_scen_pre)
+
+              # - predict the Pr in each scenario to discuss this cluster/topic
+              yhats_min <- exp(min_scen %*% t(simbetas))
+              yhats_max <- exp(max_scen %*% t(simbetas))
+
+              # - calculate the difference between max and min predicted values
+              diff <- yhats_max - yhats_min
+            } else {
+              diff <- NULL
+            }
+
+            # - calculate and save the cluster-topicmodel-covariate results
+            # - calculate the difference between max and min predicted values
+            pe <- mean(diff)
+            lwr <- quantile(diff, probs = 0.025)
+            upr <- quantile(diff, probs = 0.975)
+
+            # - add this PARTIAL result to the out-of-loop results dataframe
+            new_row <- data.frame(
+              cluster = paste0("Cluster ", sprintf("%02d", cluster)),
+              topicmodel = topmodel,
+              cov = paste0(covariate, ":", ocat),
+              pe = pe, lwr = lwr, upr = upr,
+              weighted = "none",
+              type = "partial"
+            )
+            output <- rbind(output, new_row)
+
+            # - pull the weight for this topic model
+            if (topmodel != paste0("model_k_", r@lda_u@k)) {
+              model_weight <- alternative_model_weights$weight[
+                which(paste0("model_", alternative_model_weights$model) == topmodel)]
+            } else {
+              model_weight <- 1
+            }
+            # - save weights and differences
+            all_diffs <- c(all_diffs, diff)
+            all_weights <- c(all_weights, rep(model_weight, length(diff)))
+          }
         }
-
-        # - calculate and save the cluster-topicmodel-covariate results
-        # - calculate the difference between max and min predicted values
-        pe <- mean(diff)
-        lwr <- quantile(diff, probs = 0.025)
-        upr <- quantile(diff, probs = 0.975)
-
-        # - add this PARTIAL result to the out-of-loop results dataframe
+        all_weights_std <- DMwR::ReScaling(all_weights, 0.01, 1)
+      }
+      # - calculate average effects across models for each cluster-covariate
+      for (av_type in c("regular", "weighted")) {
+        if (av_type == "regular") {
+          final_diffs <- sample(x = all_diffs, size = 1000, replace = FALSE)
+          weighted <- "no"
+        } else {
+          #set.seed(1)
+          final_diffs <- sample(x = all_diffs, size = 1000, replace = FALSE,
+                                prob = all_weights_std)
+          weighted <- "yes"
+        }
+        final_pe <- mean(final_diffs)
+        final_lwr <- quantile(final_diffs, 0.025)
+        final_upr <- quantile(final_diffs, 0.975)
+        # - save the result
         new_row <- data.frame(
           cluster = paste0("Cluster ", sprintf("%02d", cluster)),
-          topicmodel = topmodel,
-          cov = covariate,
-          pe = pe, lwr = lwr, upr = upr,
-          weighted = "none",
-          type = "partial"
+          topicmodel = "cluster-result",
+          cov = paste0(covariate, ":", ocat),
+          pe = final_pe, lwr = final_lwr, upr = final_upr,
+          weighted = weighted,
+          type = "final"
         )
         output <- rbind(output, new_row)
+      }
+    } else {
+      # - iterate through topic models
+      all_diffs <- NULL
+      all_weights <- NULL
+      topmodel_counter <- 0
+      topmodel_total <- length(topmodel_list)
+      for (topmodel in topmodel_list) {
+        topmodel_counter <- topmodel_counter + 1
+        print(paste0("... ... topic-model [", topmodel_counter, "/", topmodel_total, "]"))
+        # - replace the values in this model's column in the copy of the outcome
+        #   matrix with 0s and 1s
+        y <- Y_c[,topmodel]
+        y[which(y == cluster)] <- -1
+        y[which(y != cluster & y != -1)] <- -2
+        y <- ifelse(y == -1, 1, 0)
 
-        # - pull the weight for this topic model
-        if (topmodel != paste0("model_k_", r@lda_u@k)) {
-          model_weight <- alternative_model_weights$weight[
-            which(paste0("model_", alternative_model_weights$model) == topmodel)]
-        } else {
-          model_weight <- 1
+        model_data <- data.frame(
+          y = y,
+          x = X[,covariate]
+        )
+
+        # - if a topic model DOES NOT HAVE THE TOPIC CLUSTER, don't run the
+        #   statistical model. At this stage we are not interesting in learning
+        #   whether the topic is present but the kind of author features that are
+        #   related to the probility of discussing the topic cluster when this IS
+        #   present.
+        if (length(which(y == 1)) > 0) {
+          if (nrow(table(model_data$y)) > 1) {
+            # - estimate a bivariate logistic regression
+            model <- glm(y ~ x, data = model_data, family = "binomial")
+
+            # - calculate marginal effect when going from minimum to maximum value
+
+            # ... pull model parameters and simulate 1000 betas
+            pe <- coef(model)
+            vc <- vcov(model)
+            se <- sqrt(diag(vc))
+
+            sims <- 1000
+            simbetas <- MASS::mvrnorm(sims, pe, vc)
+
+            # - create two scenarios: one where the value for the covariate of
+            #   interest is at its minimum value, and another one at its maximum
+            min_scen <- c(1, as.numeric(min(X[,covariate]))) #... 1 for the interecept
+            max_scen <- c(1, as.numeric(max(X[,covariate])))
+
+            # - predict the Pr in each scenario to discuss this cluster/topic
+            yhats_min <- exp(min_scen %*% t(simbetas))
+            yhats_max <- exp(max_scen %*% t(simbetas))
+
+            # - calculate the difference between max and min predicted values
+            diff <- yhats_max - yhats_min
+          } else {
+            diff <- NULL
+          }
+
+          # - calculate and save the cluster-topicmodel-covariate results
+          # - calculate the difference between max and min predicted values
+          pe <- mean(diff)
+          lwr <- quantile(diff, probs = 0.025)
+          upr <- quantile(diff, probs = 0.975)
+
+          # - add this PARTIAL result to the out-of-loop results dataframe
+          new_row <- data.frame(
+            cluster = paste0("Cluster ", sprintf("%02d", cluster)),
+            topicmodel = topmodel,
+            cov = covariate,
+            pe = pe, lwr = lwr, upr = upr,
+            weighted = "none",
+            type = "partial"
+          )
+          output <- rbind(output, new_row)
+
+          # - pull the weight for this topic model
+          if (topmodel != paste0("model_k_", r@lda_u@k)) {
+            model_weight <- alternative_model_weights$weight[
+              which(paste0("model_", alternative_model_weights$model) == topmodel)]
+          } else {
+            model_weight <- 1
+          }
+          # - save weights and differences
+          all_diffs <- c(all_diffs, diff)
+          all_weights <- c(all_weights, rep(model_weight, length(diff)))
         }
-        # - save weights and differences
-        all_diffs <- c(all_diffs, diff)
-        all_weights <- c(all_weights, rep(model_weight, length(diff)))
       }
-    }
-
-    # - calculate average effects across models for each cluster-covariate
-    for (av_type in c("regular", "weighted")) {
-      if (av_type == "regular") {
-        final_diffs <- sample(x = all_diffs, size = 1000, replace = FALSE)
-        weighted <- "no"
-      } else {
-        final_diffs <- sample(x = all_diffs, size = 1000, replace = FALSE,
-                              prob = all_weights)
-        weighted <- "yes"
+      all_weights_std <- DMwR::ReScaling(all_weights, 0.01, 1)
+      # - calculate average effects across models for each cluster-covariate
+      for (av_type in c("regular", "weighted")) {
+        if (av_type == "regular") {
+          final_diffs <- sample(x = all_diffs, size = 1000, replace = FALSE)
+          weighted <- "no"
+        } else {
+          #set.seed(1)
+          final_diffs <- sample(x = all_diffs, size = 1000, replace = FALSE,
+                                prob = all_weights_std)
+          weighted <- "yes"
+        }
+        final_pe <- mean(final_diffs)
+        final_lwr <- quantile(final_diffs, 0.025)
+        final_upr <- quantile(final_diffs, 0.975)
+        # - save the result
+        new_row <- data.frame(
+          cluster = paste0("Cluster ", sprintf("%02d", cluster)),
+          topicmodel = "cluster-result",
+          cov = covariate,
+          pe = final_pe, lwr = final_lwr, upr = final_upr,
+          weighted = weighted,
+          type = "final"
+        )
+        output <- rbind(output, new_row)
       }
-      final_pe <- mean(final_diffs)
-      final_lwr <- quantile(final_diffs, 0.025)
-      final_upr <- quantile(final_diffs, 0.975)
-      # - save the result
-      new_row <- data.frame(
-        cluster = paste0("Cluster ", sprintf("%02d", cluster)),
-        topicmodel = "cluster-result",
-        cov = covariate,
-        pe = final_pe, lwr = final_lwr, upr = final_upr,
-        weighted = weighted,
-        type = "final"
-      )
-      output <- rbind(output, new_row)
     }
   }
 }
 
-# - rename the covariate labels
-output <- output %>%
-  mutate(cov = ifelse(cov == "ideal", "CONSERVATISM", as.character(cov)),
-         cov = ifelse(cov == "party", "DEMOCRATS", as.character(cov)))
+# - rename the covariate labels /!\ DON'T ADD TO PACKAGE (they must do it before
+#   hand)
+# output <- output %>%
+#   mutate(cov = ifelse(cov == "ideal", "CONSERVATISM", as.character(cov)),
+#          cov = ifelse(cov == "party", "DEMOCRATS", as.character(cov)))
 
 # - save a copy of the resulting ouptut
 # write.csv(output, paste0(
@@ -1078,9 +1214,9 @@ output_02$label <- factor(output_02$label,
                           levels = unique(as.character(out_only_final$label)))
 
 # - a plot
-pdf(paste0(data_path, "03-paper-data/Grimmer_lda/figures/",
-           "covariates_ensemble_first_differences_41_47-STRICT-WEIGHTED.pdf"),
-    width = 18, height = 18)
+# pdf(paste0(data_path, "03-paper-data/Grimmer_lda/figures/",
+#            "covariates_ensemble_first_differences_41_47-STRICT-WEIGHTED.pdf"),
+#     width = 18, height = 18)
 ggplot(output_02 %>%
          filter(type == "partial"),
        aes(x = label, y = pe, ymin = lwr, ymax = upr)) +
@@ -1089,13 +1225,13 @@ ggplot(output_02 %>%
     data = output_02 %>% filter(type == "final", weighted == "yes"),
     aes(x = as.numeric(label) + 0.2,
         xend = as.numeric(label) + 0.2,
-        y = lwr, yend = upr), color = "deepskyblue2", size = 4, alpha = 0.3) +
+        y = lwr, yend = upr), color = "plum3", size = 4, alpha = 0.5) +
   geom_segment(
     inherit.aes = FALSE,
     data = output_02 %>% filter(type == "final", weighted == "no"),
     aes(x = as.numeric(label) - 0.2,
         xend = as.numeric(label) - 0.2,
-        y = lwr, yend = upr), color = "springgreen4", size = 4, alpha = 0.3) +
+        y = lwr, yend = upr), color = "palegreen3", size = 4, alpha = 0.5) +
   geom_pointrange(alpha = 0.2, pch = 20, size = 1.1) +
   geom_point(
     inherit.aes = FALSE,
