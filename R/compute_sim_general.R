@@ -35,7 +35,7 @@ setMethod("compute_sim_general",
             sim_mat_list = list()
             feature_list = list()
             i = 0
-            j = 0
+            j = 1
             feature_list[[1]] = apply(r@beta_list[[r@idx]], 1, function(x){r@terms[order(x, decreasing = TRUE)][1:10]})
             for( i in 1:length(r@K) )
             {
@@ -51,7 +51,17 @@ setMethod("compute_sim_general",
               sim_list[[j+1]] = apply(sim_mat, 1, max)
               #print(sim_list[[j]])
               sim_mat_list[[j]] = sim_mat
-              feature_list[[j]] = apply(r@beta_list[[i]], 1, function(x){r@terms[order(x, decreasing = TRUE)][1:10]})
+              ot_dtm_ct = 1
+              if(model_type[i] == "diff_dtm")
+              {
+                diff_term = r@other_dtms[[ot_dtm_ct]]$dimnames$Terms
+                feature_list[[j]] = apply(r@beta_list[[i]], 1, function(x){diff_term[order(x, decreasing = TRUE)][1:10]})
+                ot_dtm_ct = ot_dtm_ct+1
+              }
+              else
+              {
+                feature_list[[j]] = apply(r@beta_list[[i]], 1, function(x){r@terms[order(x, decreasing = TRUE)][1:10]})
+              }
             }
 
             r@similarity_mat = sim_list

@@ -16,6 +16,8 @@
 #' @import lsa
 #' @importClassesFrom topicmodels LDA
 #' @import tm
+#' @import Hmisc
+#' @import weights
 #' @slot  dtm document term matrix
 #' @slot lda_u lda object(in topicmodels)
 #' @slot K numeric or vector, if numeric, number of k to try, if vector, k's to try (will be overwrite with list of k's tried once fit has been run)
@@ -43,13 +45,17 @@
 
 #setClassUnion("Nul_meric", c("numeric", "NULL"))
 #setClassUnion("Nul_DA", c("LDA", "NULL"))
+#devtools::use_package("weights")
+#devtools::use_package("Hmisc")
+
 
 setClass("rlda",
          representation(dtm="DocumentTermMatrix",
                         lda_u = "LDA",
                         K = "numeric",
+                        model_type = "character",
                         other_dtms = "list",
-                        #threshold="numeric",
+                        threshold="numeric",
                         same_k_estimation="numeric",
                         compute_parallel = "logical",
                         similarity_measure="character",
@@ -65,6 +71,7 @@ setClass("rlda",
                         topic_dom_perc_list = "list",
                         dominant_topic_cluster_list = "list",
                         key_features = "list",
+                        terms = "character",
                         cluster_center_key_words_list = "data.frame",
                         perc_document_belong_cluster_list = "list",
                         topic_cluster_assignment = "matrix",

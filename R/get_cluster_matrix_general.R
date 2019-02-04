@@ -1,16 +1,16 @@
-#' get_cluster_matrix
+#' get_cluster_matrix_general
 #'
 #' Compute clustering of topics across different models
 #'
-#' @include compute_sim.R
-#' @param r a rlda object
+#' @include compute_sim_general.R
+#' @param r a rlda_general object
 #' @param sim_threshold similarity threshold
-#' @exportMethod get_cluster_matrix
+#' @exportMethod get_cluster_matrix_general
 #'
 
-setGeneric("get_cluster_matrix", function(r, sim_threshold)standardGeneric("get_cluster_matrix"))
-setMethod("get_cluster_matrix",
-          signature(r = "rlda", sim_threshold = "numeric"),
+setGeneric("get_cluster_matrix_general", function(r, sim_threshold)standardGeneric("get_cluster_matrix_general"))
+setMethod("get_cluster_matrix_general",
+          signature(r = "rlda_general", sim_threshold = "numeric"),
           function (r, sim_threshold) {
             k_list <- r@K
             beta_mat <- r@beta_list[[1]]
@@ -23,7 +23,7 @@ setMethod("get_cluster_matrix",
             cluster_mat <- get_cluster_matrix_sub(sim_mat, k_list, sim_threshold)
 
 
-            cluster_top_features <- get_cluster_top_features(cluster_mat, beta_mat,
+            cluster_top_features <- get_cluster_top_features_gen(cluster_mat, beta_mat,
                                                              k_list, r, n = 6)
 
             r@topic_cluster_assignment <- cluster_mat
@@ -230,6 +230,7 @@ get_cluster_matrix_sub <- function(sim_mat, k_list, sim_threshold) {
   alternative_topics_i <- (or_topics_final_i + 1):n
   # ... iterating through original topics
   for (i in or_topics_indices) {
+    #print(i)
     or_topic_info <- sim_mat[i,]
     # - check which alternative models have already been assigned to clusters
     assigned_alt_indices <- which(!(is.na(out[,1])))
@@ -241,14 +242,17 @@ get_cluster_matrix_sub <- function(sim_mat, k_list, sim_threshold) {
       # - now checking that these matched alternative topics are not more similar
       #   to other original topics
       for (j in matches_indices) {
+        #print(j)
         matches_to_rm <- NULL
         alt_topic_info <- or_alt_sim_mat[,j]
         if (which(alt_topic_info == max(alt_topic_info)) != i) {
           matches_to_rm <- c(matches_to_rm, j)
         }
       }
+      #print(1)
       matches_indices <- matches_indices[which(!(matches_indices %in%
                                                    matches_to_rm))]
+      #print(2)
       # - store this cluster-assingment
       out[matches_indices,] <- i
     }
@@ -297,7 +301,7 @@ get_cluster_matrix_sub <- function(sim_mat, k_list, sim_threshold) {
 # [ C ] GETTING THE TOP FEATURES OF THE CLUSTER CENTROIDS
 #-------------------------------------------------------------------------------
 # - A Function performing this task
-get_cluster_top_features <- function(cluster_mat, beta_mat, k_list, rlda_obj,
+get_cluster_top_features_gen <- function(cluster_mat, beta_mat, k_list, rlda_obj,
                                      n = 6) {
   # - labeling the columns(features) of the beta matrix
   ## change vals=0 to min
@@ -315,7 +319,7 @@ get_cluster_top_features <- function(cluster_mat, beta_mat, k_list, rlda_obj,
 
   # - we assign the top predictive features from each original topic to the
   #   clusters of those topics: not actually calculating any centroid
-  for (i in 1:rlda_obj@lda_u@k) {
+  for (i in 1:rlda_obj@K[rlda_obj@idx]) {
     top_features <- data.frame(
       features = names(beta_df[i,]),
       betas = as.numeric(beta_df[i,])) %>%
@@ -327,7 +331,7 @@ get_cluster_top_features <- function(cluster_mat, beta_mat, k_list, rlda_obj,
 
   # - For the rest of the topics, calculate the centroid first (average betas),
   #   and then pull the most predictive features according to the centroid
-  for (z in ((rlda_obj@lda_u@k + 1):max(cluster_mat[,1]))) {
+  for (z in ((rlda_obj@K[rlda_obj@idx] + 1):max(cluster_mat[,1]))) {
     # - pull the indeces of the topics in this cluster
     cluster_top_indices <- which(cluster_mat[,1] == z)
 
