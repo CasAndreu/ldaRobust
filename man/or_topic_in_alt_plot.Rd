@@ -7,7 +7,7 @@
 or_topic_in_alt_plot(r, dir)
 }
 \arguments{
-\item{r}{a rlda object}
+\item{r}{a rlda or rstm object}
 
 \item{dir}{directory to save plot}
 }

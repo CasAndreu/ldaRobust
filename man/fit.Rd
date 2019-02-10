@@ -7,7 +7,7 @@
 fit(r)
 }
 \arguments{
-\item{r}{a rlda object}
+\item{r}{a rlda or rstm object}
 }
 \description{
 This function fits different LDA models with different number of clusters for a rlda object

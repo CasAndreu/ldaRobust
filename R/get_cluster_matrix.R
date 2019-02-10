@@ -3,7 +3,7 @@
 #' Compute clustering of topics across different models
 #'
 #' @include compute_sim.R
-#' @param r a rlda object
+#' @param r a rlda or rstm object
 #' @param sim_threshold similarity threshold
 #' @exportMethod get_cluster_matrix
 #'
@@ -173,6 +173,161 @@ setMethod("get_cluster_matrix",
           })
 
 
+setMethod("get_cluster_matrix",
+          signature(r = "rstm", sim_threshold = "numeric"),
+          function (r, sim_threshold) {
+            k_list <- r@K
+            beta_mat <- r@beta_list[[1]]
+            for (topic_model_i in 2:length(r@beta_list)) {
+              beta_mat <- rbind(beta_mat, r@beta_list[[topic_model_i]])
+            }
+            sim_mat <- cos_sim(beta_mat, beta_mat)
+
+            cluster_mat <- get_cluster_matrix_sub(sim_mat, k_list, sim_threshold)
+
+
+            cluster_top_features <- get_cluster_top_features_stm(cluster_mat, beta_mat,
+                                                                 k_list, r, n = 6)
+
+            r@topic_cluster_assignment <- cluster_mat
+            r@cluster_center_key_words_list <- cluster_top_features
+
+            or_topics_alt_models_mat <- as.data.frame(matrix(nrow = k_list[1],
+                                                             ncol = (length(k_list)-1)))
+
+            # - iterate through original topics and checking whether they are in alternative
+            #   models
+            for (i in (1:k_list[1])) {
+              for (j in 1:(length(k_list)-1)) {
+                # - pull the number of topics of the first alternative model
+                j_num_topics <- k_list[j + 1]
+                # - calculate the row indices of the topics of this alternative model in the
+                #   cluster matrix
+                if (j == 1) {
+                  cluster_mat_alt_model_indices <- (k_list[1] + 1):(
+                    k_list[1] + j_num_topics)
+                } else {
+                  cluster_mat_alt_model_indices <- (sum(k_list[1:j]) + 1):(
+                    (sum(k_list[1:j]) + j_num_topics))
+                }
+                # - pull the topic-clusters found in this model
+                alt_model_clusters <- cluster_mat[cluster_mat_alt_model_indices,1]
+                # - check if original topic i is in there
+                if (i %in% alt_model_clusters) {
+                  # - count how many times is present in this alternative model
+                  x <- length(which(alt_model_clusters == i))
+                } else {
+                  x <- 0
+                }
+                # - add the information to the initialized matrix
+                or_topics_alt_models_mat[i,j] <- x
+              }
+            }
+
+            # A matrix indicating whether NEW topic-clusters are present in alternative
+            # models
+            new_topics_alt_models_mat <- as.data.frame(matrix(
+              nrow = length((k_list[1] + 1):max(cluster_mat[,1])),
+              ncol = (length(k_list)-1)))
+
+            # - iterate through original topics and checking whether they are in alternative
+            #   models
+            for (i in ((k_list[1] + 1):max(cluster_mat[,1]))) {
+              for (j in 1:(length(k_list)-1)) {
+                # - pull the number of topics of the first alternative model
+                j_num_topics <- k_list[j + 1]
+                # - calculate the row indices of the topics of this alternative model in the
+                #   cluster matrix
+                if (j == 1) {
+                  cluster_mat_alt_model_indices <- (k_list[1] + 1):(
+                    k_list[1] + j_num_topics)
+                } else {
+                  cluster_mat_alt_model_indices <- (sum(k_list[1:j]) + 1):(
+                    (sum(k_list[1:j]) + j_num_topics))
+                }
+                # - pull the topic-clusters found in this model
+                alt_model_clusters <- cluster_mat[cluster_mat_alt_model_indices,1]
+                # - check if original topic i is in there
+                if (i %in% alt_model_clusters) {
+                  # - count how many times is present in this alternative model
+                  x <- length(which(alt_model_clusters == i))
+                } else {
+                  x <- 0
+                }
+                # - add the information to the initialized matrix
+                new_topics_alt_models_mat[i - (k_list[1]),j] <- x
+              }
+            }
+
+            # Merge these two matrices
+            top_stability_mat <- rbind(
+              or_topics_alt_models_mat,
+              new_topics_alt_models_mat
+            )
+
+            # Add the information about each topic-cluster top features
+            # ... naming the alternative models
+            names(top_stability_mat) <- paste0(paste0("k_", k_list[2:length(k_list)]), r@model_type[2:length(k_list)])
+            # ... top features
+            top_stability_mat$top_features <- cluster_top_features$top_features
+            # ... numbering the clusters
+            top_stability_mat$top_cluster_num <- paste0(sprintf("%02d",
+                                                                1:nrow(top_stability_mat)))
+
+            r@top_stability_mat = top_stability_mat
+
+
+            # create doc_by_cluster_and_model
+            docs_by_cluster_and_model <- as.data.frame(matrix(
+              nrow = length(r@documents),
+              ncol = length(k_list)))
+            colnames(docs_by_cluster_and_model) <- paste0(paste0("model_k_", k_list), r@model_type)
+
+            # - adding now the information about into which cluster each
+            #   document has beenclassified
+            i <- 0
+            # ... iterate through model K's
+            for (idx in 1:length(k_list)) {
+              # - pull the doc-topic gamma matrix for this model
+              m = k_list[idx]
+              theta_mat <- r@theta_list[[idx]]
+
+              # - pull doc-topic assignment from gamm matrix
+              doc_topic <- data.frame(
+                model_topic = sapply(1:nrow(theta_mat), function(j)
+                  which(theta_mat[j,] == max(theta_mat[j,])))
+              )
+
+              # - find out the index of the first and last topic-cluster assignment for this
+              #   model
+              start_i <- i + 1
+              end_i <- (start_i + m - 1)
+              model_label <- paste0(paste0("model_k_", m), r@model_type[idx])
+              print(model_label)
+
+              # - pull this model's topic-cluster assignment, and merge with doc-topic
+              #   assignment in order to see into which cluster the doc got classified into
+              topic_cluster <- data.frame(
+                model_topic = 1:m,
+                cluster = cluster_mat[start_i:end_i]
+              )
+              doc_cluster <- suppressMessages(
+                left_join(doc_topic, topic_cluster))
+
+              # - add this data to the out-of-the-loop output df
+              docs_by_cluster_and_model[,model_label] <- doc_cluster$cluster
+
+              # - update the index that indicates the start of the topic-cluster assignments
+              i <- end_i
+            }
+
+            # - adding this information into the `docs_by_cluster_and_model`
+            #   @slot
+            r@docs_by_cluster_and_model <- docs_by_cluster_and_model
+            return(r)
+          }
+)
+
 get_sim_matrix <- function(beta_mat, method = "cosine") {
   # - initialize the output matrix
   out <- matrix(nrow = nrow(beta_mat), ncol = nrow(beta_mat))
@@ -328,6 +483,61 @@ get_cluster_top_features <- function(cluster_mat, beta_mat, k_list, rlda_obj,
   # - For the rest of the topics, calculate the centroid first (average betas),
   #   and then pull the most predictive features according to the centroid
   for (z in ((rlda_obj@lda_u@k + 1):max(cluster_mat[,1]))) {
+    # - pull the indeces of the topics in this cluster
+    cluster_top_indices <- which(cluster_mat[,1] == z)
+
+    # - pull the betas of this/these topics
+    top_betas <- beta_df[cluster_top_indices,]
+
+    # - if only 1 topic in this cluster, that's the centroid, otherwise take avg
+    if (nrow(top_betas) == 1) {
+      centroid <- top_betas
+    } else {
+      centroid <- colMeans(top_betas)
+    }
+    centroid_df <- data.frame(
+      betas = as.numeric(centroid),
+      features = names(centroid)
+    ) %>%
+      arrange(desc(betas)) %>%
+      head(n = n)
+    centroid_str <- paste0(centroid_df$features, collapse = ", ")
+    out$top_features[z] <- centroid_str
+  }
+  return(out)
+}
+
+get_cluster_top_features_stm <- function(cluster_mat, beta_mat, k_list, rstm_obj,
+                                         n = 6) {
+  # - labeling the columns(features) of the beta matrix
+  ## change vals=0 to min
+  min_val = min(beta_mat)
+  zero_idx = (beta_mat == 0)
+  beta_mat[zero_idx] = min_val-1
+
+  beta_df <- as.data.frame(beta_mat)
+  colnames(beta_df) <- rstm_obj@vocab
+
+  # - initializing output
+  out <- as.data.frame(matrix(nrow = max(cluster_mat[,1]), ncol = 2))
+  colnames(out) <- c("cluster_num", "top_features")
+  out$cluster_num <- 1:nrow(out)
+
+  # - we assign the top predictive features from each original topic to the
+  #   clusters of those topics: not actually calculating any centroid
+  for (i in 1:rstm_obj@stm_u$settings$dim$K) {
+    top_features <- data.frame(
+      features = names(beta_df[i,]),
+      betas = as.numeric(beta_df[i,])) %>%
+      arrange(desc(betas)) %>%
+      head(n = n)
+    top_features_str <- paste0(top_features$features, collapse = ", ")
+    out$top_features[i] <- top_features_str
+  }
+
+  # - For the rest of the topics, calculate the centroid first (average betas),
+  #   and then pull the most predictive features according to the centroid
+  for (z in ((rstm_obj@stm_u$settings$dim$K + 1):max(cluster_mat[,1]))) {
     # - pull the indeces of the topics in this cluster
     cluster_top_indices <- which(cluster_mat[,1] == z)
 
