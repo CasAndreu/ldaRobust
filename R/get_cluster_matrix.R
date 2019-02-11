@@ -224,38 +224,41 @@ setMethod("get_cluster_matrix",
               }
             }
 
-            # A matrix indicating whether NEW topic-clusters are present in alternative
-            # models
-            new_topics_alt_models_mat <- as.data.frame(matrix(
-              nrow = length((k_list[1] + 1):max(cluster_mat[,1])),
-              ncol = (length(k_list)-1)))
 
-            # - iterate through original topics and checking whether they are in alternative
-            #   models
-            for (i in ((k_list[1] + 1):max(cluster_mat[,1]))) {
-              for (j in 1:(length(k_list)-1)) {
-                # - pull the number of topics of the first alternative model
-                j_num_topics <- k_list[j + 1]
-                # - calculate the row indices of the topics of this alternative model in the
-                #   cluster matrix
-                if (j == 1) {
-                  cluster_mat_alt_model_indices <- (k_list[1] + 1):(
-                    k_list[1] + j_num_topics)
-                } else {
-                  cluster_mat_alt_model_indices <- (sum(k_list[1:j]) + 1):(
-                    (sum(k_list[1:j]) + j_num_topics))
+            # if no alt topic was matched, we can skp this
+            if((r@stm_u$settings$dim$K + 1)<max(cluster_mat[,1])){
+              # A matrix indicating whether NEW topic-clusters are present in alternative
+              # models
+              new_topics_alt_models_mat <- as.data.frame(matrix(
+                nrow = length((k_list[1] + 1):max(cluster_mat[,1])),
+                ncol = (length(k_list)-1)))
+              # - iterate through original topics and checking whether they are in alternative
+              #   models
+              for (i in ((k_list[1] + 1):max(cluster_mat[,1]))) {
+                for (j in 1:(length(k_list)-1)) {
+                  # - pull the number of topics of the first alternative model
+                  j_num_topics <- k_list[j + 1]
+                  # - calculate the row indices of the topics of this alternative model in the
+                  #   cluster matrix
+                  if (j == 1) {
+                    cluster_mat_alt_model_indices <- (k_list[1] + 1):(
+                      k_list[1] + j_num_topics)
+                  } else {
+                    cluster_mat_alt_model_indices <- (sum(k_list[1:j]) + 1):(
+                      (sum(k_list[1:j]) + j_num_topics))
+                  }
+                  # - pull the topic-clusters found in this model
+                  alt_model_clusters <- cluster_mat[cluster_mat_alt_model_indices,1]
+                  # - check if original topic i is in there
+                  if (i %in% alt_model_clusters) {
+                    # - count how many times is present in this alternative model
+                    x <- length(which(alt_model_clusters == i))
+                  } else {
+                    x <- 0
+                  }
+                  # - add the information to the initialized matrix
+                  new_topics_alt_models_mat[i - (k_list[1]),j] <- x
                 }
-                # - pull the topic-clusters found in this model
-                alt_model_clusters <- cluster_mat[cluster_mat_alt_model_indices,1]
-                # - check if original topic i is in there
-                if (i %in% alt_model_clusters) {
-                  # - count how many times is present in this alternative model
-                  x <- length(which(alt_model_clusters == i))
-                } else {
-                  x <- 0
-                }
-                # - add the information to the initialized matrix
-                new_topics_alt_models_mat[i - (k_list[1]),j] <- x
               }
             }
 
@@ -267,7 +270,9 @@ setMethod("get_cluster_matrix",
 
             # Add the information about each topic-cluster top features
             # ... naming the alternative models
-            names(top_stability_mat) <- paste0(paste0("k_", k_list[2:length(k_list)]), r@model_type[2:length(k_list)])
+            #names(top_stability_mat) <- paste0(paste0("k_", k_list[2:length(k_list)]), r@model_type[2:length(k_list)])
+            # I don't know why we include the model type in the name here...
+            names(top_stability_mat) <- paste0(paste0("k_", k_list[2:length(k_list)]))
             # ... top features
             top_stability_mat$top_features <- cluster_top_features$top_features
             # ... numbering the clusters
@@ -440,6 +445,7 @@ get_cluster_matrix_sub <- function(sim_mat, k_list, sim_threshold) {
         }
       }
     } else {
+      # I don't think this line doesn anything because `unmatched_topindices`==0...
       out[unmatched_top_indices] <- max(out[,1], na.rm = TRUE) + 1
     }
   }
@@ -535,29 +541,32 @@ get_cluster_top_features_stm <- function(cluster_mat, beta_mat, k_list, rstm_obj
     out$top_features[i] <- top_features_str
   }
 
-  # - For the rest of the topics, calculate the centroid first (average betas),
-  #   and then pull the most predictive features according to the centroid
-  for (z in ((rstm_obj@stm_u$settings$dim$K + 1):max(cluster_mat[,1]))) {
-    # - pull the indeces of the topics in this cluster
-    cluster_top_indices <- which(cluster_mat[,1] == z)
+  # if no alt topic was matched, we can skp this
+  if((rstm_obj@stm_u$settings$dim$K + 1)<max(cluster_mat[,1])){
+    # - For the rest of the topics, calculate the centroid first (average betas),
+    #   and then pull the most predictive features according to the centroid
+    for (z in ((rstm_obj@stm_u$settings$dim$K + 1):max(cluster_mat[,1]))) {
+      # - pull the indeces of the topics in this cluster
+      cluster_top_indices <- which(cluster_mat[,1] == z)
 
-    # - pull the betas of this/these topics
-    top_betas <- beta_df[cluster_top_indices,]
+      # - pull the betas of this/these topics
+      top_betas <- beta_df[cluster_top_indices,]
 
-    # - if only 1 topic in this cluster, that's the centroid, otherwise take avg
-    if (nrow(top_betas) == 1) {
-      centroid <- top_betas
-    } else {
-      centroid <- colMeans(top_betas)
+      # - if only 1 topic in this cluster, that's the centroid, otherwise take avg
+      if (nrow(top_betas) == 1) {
+        centroid <- top_betas
+      } else {
+        centroid <- colMeans(top_betas)
+      }
+      centroid_df <- data.frame(
+        betas = as.numeric(centroid),
+        features = names(centroid)
+      ) %>%
+        arrange(desc(betas)) %>%
+        head(n = n)
+      centroid_str <- paste0(centroid_df$features, collapse = ", ")
+      out$top_features[z] <- centroid_str
     }
-    centroid_df <- data.frame(
-      betas = as.numeric(centroid),
-      features = names(centroid)
-    ) %>%
-      arrange(desc(betas)) %>%
-      head(n = n)
-    centroid_str <- paste0(centroid_df$features, collapse = ", ")
-    out$top_features[z] <- centroid_str
   }
   return(out)
 }

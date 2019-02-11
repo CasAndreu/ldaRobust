@@ -1,0 +1,69 @@
+---
+title: "stmRobust"
+output: html_notebook
+---
+
+```{r load dependencies}
+library(ldaRobust)
+library(stm)
+```
+
+We'll use the `poliblog` dataset included in the `STM` package.
+
+Just as with rlda, we start by fitting an `STM` object. `stm()` takes three key arguments: `documents`, which is a list of the preprocessed documents which together form our corpus, `vocab`, a character vector of the unique tokens in our corpus, and `K`, the number of topics we'd like to fit. The `stm` package has some great functions for finding a good `K`. We're also setting the seed for reproducibility. 
+
+```{r fit stm}
+documents <- stm::poliblog5k.docs
+vocab <- stm::poliblog5k.voc
+stm <- stm(documents, vocab, K = 30, seed = 24)
+```
+
+We can examine the topics we've feet by using `stm`'s `labelTopics` function:
+```{r check fitted topics}
+labelTopics(stm)
+```
+
+
+Now that we have a `STM` we can use stmRobust to check our choice of `K`. If you have multiple cores, try setting compute_parallel to `TRUE`. While `stm`'s internal functions don't support parallel fitting on Windows machines, this implementation works on Windows.
+
+```{r fit robust stm}
+r_stm <- new("rstm",
+            documents = documents, 
+            vocab = vocab, 
+            stm_u = stm, 
+            K = 6,
+            
+            compute_parallel = FALSE)
+
+r_stm <- fit(r_stm)
+```
+
+
+```{r get cluster matrix}
+sim_threshold <- 0.93
+r_stm_cluster <- get_cluster_matrix(r_stm, sim_threshold)
+```
+
+
+```{r}
+or_topic_in_alt_plot(r_stm_cluster, dir = '')
+```
+
+
+
+```{r}
+plot_cluster_proportion(r, dir = '')
+```
+
+
+
+
+
+
+
+
+
+
+
+
+

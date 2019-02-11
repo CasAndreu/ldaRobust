@@ -238,8 +238,8 @@ setMethod("fit",
               model_type = rep("diff_K", length(k_list))
             }
 
-
-            feature_list[[1]] = apply(stm_u$beta$logbeta[[1]], 1, function(x){vocab[order(x, decreasing = TRUE)][1:10]})
+            #stm uses log betas, exp to convert
+            feature_list[[1]] = apply(exp(stm_u$beta$logbeta[[1]]), 1, function(x){vocab[order(x, decreasing = TRUE)][1:10]})
 
             # get top 10 features for each model
             for (i in 1:length(stm_list)){
@@ -248,15 +248,16 @@ setMethod("fit",
 
               # each column is top 10 feature for each topic in model_i
               mod = stm_list[[i]]
-              top_f = apply(mod$beta$logbeta[[1]], 1, function(x){vocab[order(x, decreasing = TRUE)][1:10]})
+              #stm uses log betas, exp to convert
+              top_f = apply(exp(mod$beta$logbeta[[1]]), 1, function(x){vocab[order(x, decreasing = TRUE)][1:10]})
               feature_list[[i+1]] = top_f
-              beta_list[[i]] = mod$beta$logbeta[[1]]
+              beta_list[[i]] = exp(mod$beta$logbeta[[1]]) #stm uses log betas, exp to convert
               theta_list[[i]] = mod$theta
             }
 
             #overwrite K?
             r@key_features <- feature_list
-            r@beta_list <- c(list(stm_u$beta$logbeta[[1]]),beta_list)
+            r@beta_list <- c(list(exp(stm_u$beta$logbeta[[1]])),beta_list) #stm uses log betas, exp to convert
             r@theta_list <- c(list(mod$theta), theta_list)
             r@model_type <- c("or", model_type)
             r@K <- c(stm_u$settings$dim$K, k_list)
@@ -314,9 +315,9 @@ lda_wrapper_k_para <- function(dtm, list_of_k, control_list){
 stm_wrapper_k <- function(documents, vocab, list_of_k){
   stm_l = NULL
   print(length(vocab))
-  for (k in list_of_k){
-    stm_k=stm::stm(documents, vocab, K=k)
-    stm_l[[k]] <- stm_k
+  for (i in 1:length(list_of_k)){
+    stm_k=stm::stm(documents, vocab, K=list_of_k[[i]])
+    stm_l[[i]] <- stm_k
   }
   return(stm_l)
 }

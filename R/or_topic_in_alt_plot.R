@@ -106,7 +106,7 @@ setMethod("or_topic_in_alt_plot",
             #           "topic_presence_41_47-STRICT.pdf"),
             #    width = 20, height = 18)
             ggplot(plot_db,
-                   aes(y = as.numeric(as.factor(labels)), x = model,
+                   aes(y = as.numeric(as.factor(labels)), x = reorder(as.factor(model), as.numeric(gsub('\\D+','', plot_db$model))),
                        fill = as.character(value_binary))) +
               geom_tile( color = "gray20") +
               #geom_hline(yintercept = 2.5, size = 1.5) +
