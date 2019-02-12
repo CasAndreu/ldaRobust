@@ -184,13 +184,15 @@ setMethod("fit",
             K <- r@K
             documents <- r@documents
             vocab <- r@vocab
-            stm_list = NULL
+            meta <- r@meta
+            prevalence <- stm_u$settings$covariates$formula
+            stm_list <- NULL
             k_list <- K
             seed_list=NULL
-            beta_list = list()
-            theta_list = list()
-            feature_list = list()
-            model_type = NULL
+            beta_list <- list()
+            theta_list <- list()
+            feature_list <- list()
+            model_type <- NULL
 
             # initialize list of k to try and run lda on all
             if (length(K) == 1){
@@ -218,10 +220,10 @@ setMethod("fit",
                 print("list of K to try: ")
                 print(k_list)
                 if(r@compute_parallel == TRUE){
-                  stm_list = stm_wrapper_k_para(documents, vocab, k_list)
+                  stm_list = stm_wrapper_k_para(documents, vocab, meta, prevalence, k_list)
                 }
                 else{
-                  stm_list = stm_wrapper_k(documents, vocab, k_list)
+                  stm_list = stm_wrapper_k(documents, vocab, meta, prevalence, k_list)
                 }
                 #r@K = k_list
                 model_type = rep("diff_K", length(k_list))
@@ -230,10 +232,10 @@ setMethod("fit",
             else{
               # if k is a vector
               if(r@compute_parallel == TRUE){
-                stm_list = stm_wrapper_k_para(documents, vocab, k_list)
+                stm_list = stm_wrapper_k_para(documents, vocab, meta, prevalence, k_list)
               }
               else{
-                stm_list = stm_wrapper_k(documents, vocab, k_list)
+                stm_list = stm_wrapper_k(documents, vocab, meta, prevalence, k_list)
               }
               model_type = rep("diff_K", length(k_list))
             }
@@ -312,24 +314,24 @@ lda_wrapper_k_para <- function(dtm, list_of_k, control_list){
   return(lda_l)
 }
 
-stm_wrapper_k <- function(documents, vocab, list_of_k){
+stm_wrapper_k <- function(documents, vocab, meta, prevalence, list_of_k){
   stm_l = NULL
-  print(length(vocab))
+  print(prevalence)
   for (i in 1:length(list_of_k)){
-    stm_k=stm::stm(documents, vocab, K=list_of_k[[i]])
+    stm_k=stm::stm(documents, vocab, prevalence = prevalence, data = meta, K=list_of_k[[i]])
     stm_l[[i]] <- stm_k
   }
   return(stm_l)
 }
 
-stm_wrapper_k_para <- function(documents, vocab, list_of_k){
+stm_wrapper_k_para <- function(documents, vocab, meta, prevalence, list_of_k){
   stm_l = NULL
   no_cores <- parallel::detectCores() - 1
   cl<-parallel::makeCluster(no_cores)
   parallel::clusterSetRNGStream(cl, 123)
   doParallel::registerDoParallel(cl)
   stm_l = foreach::foreach( k = list_of_k)  %dopar% {
-    stm::stm(documents, vocab, K=k)
+    stm::stm(documents, vocab,  K=k)
   }
 
   parallel::stopCluster(cl)

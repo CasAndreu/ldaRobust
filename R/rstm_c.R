@@ -20,6 +20,7 @@
 #' @import weights
 #' @slot  documents document list
 #' @slot vocab vocabulary
+#' @slot meta dataframe
 #' @slot stm_u stm object(from STM)
 #' @slot K numeric or vector, if numeric, number of k to try, if vector, k's to try (will be overwrite with list of k's tried once fit has been run)
 #' @slot compute_parallel bool, if true, will parallel when fitting lda models; otherwise, sequential for fitting
@@ -50,6 +51,7 @@ setClassUnion("STM", c("list", "NULL"))
 setClass("rstm",
          representation(documents ="list",
                         vocab = "character",
+                        meta = "data.frame",
                         stm_u = "STM",
                         K = "numeric",
                         model_type = "character",

@@ -17,6 +17,8 @@ methods: stm wrapper, fit
 
 \item{\code{vocab}}{vocabulary}
 
+\item{\code{meta}}{dataframe}
+
 \item{\code{stm_u}}{stm object(from STM)}
 
 \item{\code{K}}{numeric or vector, if numeric, number of k to try, if vector, k's to try (will be overwrite with list of k's tried once fit has been run)}
