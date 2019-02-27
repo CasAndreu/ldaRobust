@@ -7,7 +7,7 @@
 get_cluster_matrix(r, sim_threshold)
 }
 \arguments{
-\item{r}{a rlda object}
+\item{r}{a rlda or rstm object}
 
 \item{sim_threshold}{similarity threshold}
 }
