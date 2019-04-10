@@ -33,12 +33,14 @@ setMethod("or_topic_in_alt_plot",
                       mutate(labels = factor(as.character(labels),
                                              levels = rev(unique(plot_db$labels))),
                              value_binary = ifelse(value > 0, 1, 0),
-                             model = paste0(gsub("diff_", "(diff-", gsub("k_", "k = ", model)), ")"))
+                             model = paste0(gsub("diff_", "(diff-", gsub("k_", "k = ", model)), ")"),
+                             original = ifelse(as.numeric(as.character(top_cluster_num)) > max(r@K), 
+                                               "or", "new"))
 
                     ggplot(plot_db,
                            aes(y = as.numeric(as.factor(labels)), x = model,
                                fill = as.character(value_binary))) +
-                      geom_tile( color = "gray20") +
+                      geom_tile(color = "gray20", aes(alpha = original)) +
                       scale_x_discrete("\nAlternative Models", expand = c(0,0)) +
                       scale_y_continuous("", expand = c(0,0),
                                          breaks = seq(1, nrow(top_stability_mat), 1),
@@ -49,7 +51,7 @@ setMethod("or_topic_in_alt_plot",
                                            breaks = seq(1,length(top_stability_mat$top_features), 1),
                                            labels = rev(top_stability_mat$top_features))) +
                       scale_fill_manual(values = c("gray80", "springgreen4")) +
-                      scale_alpha_manual(values = c(1, 0.7)) +
+                      scale_alpha_manual("", values = c(1, 0.7)) +
                       theme(
                         panel.background = element_blank(),
                         legend.position = "none",
