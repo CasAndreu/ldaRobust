@@ -35,3 +35,7 @@ Collate:
     'plot_topDoc.R'
     'plot_visual.R'
     'plot_visual_gen.R'
+    'get_cluster_matrix_general.R'
+    'or_topic_in_alt_plot_general.R'
+    'plot_cluster_proportions_general.R'
+    'set_up_general.R'
