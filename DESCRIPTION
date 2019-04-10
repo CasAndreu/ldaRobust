@@ -17,7 +17,8 @@ Imports: topicmodels,
     dplyr,
     tidyr,
     lme4,
-    lsa
+    lsa,
+    usethis
 Collate: 
     'rlda_c.R'
     'cluster_func.R'
