@@ -34,13 +34,15 @@ setMethod("or_topic_in_alt_plot",
                                              levels = rev(unique(plot_db$labels))),
                              value_binary = ifelse(value > 0, 1, 0),
                              model = paste0(gsub("diff_", "(diff-", gsub("k_", "k = ", model)), ")"),
-                             original = ifelse(as.numeric(as.character(top_cluster_num)) > max(r@K), 
+                             original = ifelse(as.numeric(as.character(top_cluster_num)) > r@lda_u@k, 
                                                "or", "new"))
 
                     ggplot(plot_db,
                            aes(y = as.numeric(as.factor(labels)), x = model,
                                fill = as.character(value_binary))) +
                       geom_tile(color = "gray20", aes(alpha = original)) +
+                      geom_hline(aes(yintercept =  (max(as.numeric(
+                        as.character(top_cluster_num))) - r@lda_u@k) + 0.5))  +
                       scale_x_discrete("\nAlternative Models", expand = c(0,0)) +
                       scale_y_continuous("", expand = c(0,0),
                                          breaks = seq(1, nrow(top_stability_mat), 1),
